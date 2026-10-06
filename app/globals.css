@@ -1,0 +1,301 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  :root {
+    /* Refined Enterprise SaaS Light Theme Tokens (Linear x Stripe aesthetic) */
+    --background: 240 10% 98%;      /* oklch(0.975 0.004 260) #f8f9fa */
+    --foreground: 240 10% 12%;      /* oklch(0.205 0.022 263) #181d27 */
+
+    --card: 0 0% 100%;              /* Pure white surface */
+    --card-foreground: 240 10% 12%;
+
+    --popover: 0 0% 100%;
+    --popover-foreground: 240 10% 12%;
+
+    --primary: 226 70% 50%;         /* oklch(0.56 0.19 258) Refined Cobalt Indigo */
+    --primary-foreground: 0 0% 100%;
+
+    --secondary: 240 5% 94%;
+    --secondary-foreground: 240 10% 12%;
+
+    --muted: 240 5% 95%;            /* oklch(0.955 0.006 260) #f1f3f7 */
+    --muted-foreground: 240 4% 44%; /* oklch(0.51 0.028 262) #687282 */
+
+    --accent: 240 5% 93%;
+    --accent-foreground: 240 10% 12%;
+
+    --destructive: 0 72% 51%;
+    --destructive-foreground: 0 0% 98%;
+
+    --success: 160 84% 39%;
+    --success-foreground: 0 0% 100%;
+
+    --warning: 38 92% 50%;
+    --warning-foreground: 240 10% 4%;
+
+    --info: 217 91% 60%;
+    --info-foreground: 0 0% 100%;
+
+    --border: 240 6% 89%;           /* oklch(0.895 0.012 260) #e2e5eb */
+    --input: 240 6% 86%;
+    --ring: 226 70% 50%;
+
+    --radius: 0.75rem;              /* 12px standard card radius */
+  }
+
+  .dark {
+    /* Refined Deep Navy/Slate Dark Theme (Never pure black) */
+    --background: 240 10% 8%;       /* oklch(0.16 0.018 263) #11141a */
+    --foreground: 240 5% 94%;       /* oklch(0.94 0.008 260) #eff1f5 */
+
+    --card: 240 8% 11%;             /* oklch(0.205 0.02 263) #181c24 */
+    --card-foreground: 240 5% 94%;
+
+    --popover: 240 8% 13%;
+    --popover-foreground: 240 5% 94%;
+
+    --primary: 217 91% 60%;         /* oklch(0.70 0.15 255) #3b82f6 */
+    --primary-foreground: 0 0% 100%;
+
+    --secondary: 240 7% 15%;
+    --secondary-foreground: 240 5% 94%;
+
+    --muted: 240 7% 14%;            /* oklch(0.24 0.02 263) #202530 */
+    --muted-foreground: 240 5% 64%; /* oklch(0.65 0.02 260) #94a0b3 */
+
+    --accent: 240 7% 16%;
+    --accent-foreground: 240 5% 94%;
+
+    --destructive: 0 72% 51%;
+    --destructive-foreground: 0 0% 98%;
+
+    --success: 160 74% 44%;
+    --success-foreground: 0 0% 100%;
+
+    --warning: 38 92% 50%;
+    --warning-foreground: 0 0% 4%;
+
+    --info: 217 91% 60%;
+    --info-foreground: 0 0% 100%;
+
+    --border: 240 6% 18%;           /* oklch(1 0 0 / 12%) subtle slate border */
+    --input: 240 6% 20%;
+    --ring: 217 91% 60%;
+  }
+
+  /* Accent Themes (Light Mode) */
+  [data-accent="blue"] {
+    --primary: 226 70% 50%;
+    --ring: 226 70% 50%;
+  }
+  [data-accent="purple"] {
+    --primary: 270 70% 52%;
+    --ring: 270 70% 52%;
+  }
+  [data-accent="emerald"] {
+    --primary: 160 84% 39%;
+    --ring: 160 84% 39%;
+  }
+  [data-accent="orange"] {
+    --primary: 24 95% 50%;
+    --ring: 24 95% 50%;
+  }
+  [data-accent="crimson"] {
+    --primary: 348 83% 50%;
+    --ring: 348 83% 50%;
+  }
+
+  /* Accent Themes (Dark Mode) */
+  .dark[data-accent="blue"] {
+    --primary: 217 91% 60%;
+    --ring: 217 91% 60%;
+  }
+  .dark[data-accent="purple"] {
+    --primary: 270 85% 65%;
+    --ring: 270 85% 65%;
+  }
+  .dark[data-accent="emerald"] {
+    --primary: 160 74% 48%;
+    --ring: 160 74% 48%;
+  }
+  .dark[data-accent="orange"] {
+    --primary: 24 95% 58%;
+    --ring: 24 95% 58%;
+  }
+  .dark[data-accent="crimson"] {
+    --primary: 348 85% 62%;
+    --ring: 348 85% 62%;
+  }
+}
+
+@layer base {
+  * {
+    @apply border-border;
+  }
+  body {
+    @apply bg-background text-foreground antialiased;
+    font-feature-settings: "cv02", "cv03", "cv04", "cv11", "tnum";
+    letter-spacing: -0.011em;
+  }
+
+  /* Precise tabular numbers for metrics, timestamps, and financial figures */
+  .tabular-nums {
+    font-variant-numeric: tabular-nums;
+  }
+}
+
+/* Minimalist Precision Scrollbar */
+::-webkit-scrollbar {
+  width: 5px;
+  height: 5px;
+}
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+::-webkit-scrollbar-thumb {
+  background: hsl(var(--muted-foreground) / 0.2);
+  border-radius: 9999px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: hsl(var(--muted-foreground) / 0.35);
+}
+
+/* ───────────────────────────────────────────────────────────── */
+/* Sleek Enterprise SaaS Toasts (Linear x Stripe aesthetic)     */
+/* ───────────────────────────────────────────────────────────── */
+
+@keyframes toast-progress-countdown {
+  from {
+    transform: scaleX(1);
+  }
+  to {
+    transform: scaleX(0);
+  }
+}
+
+@keyframes toast-slide-in {
+  from {
+    opacity: 0;
+    transform: translateX(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+@keyframes toast-slide-out {
+  from {
+    opacity: 1;
+    transform: translateX(0);
+  }
+  to {
+    opacity: 0;
+    transform: translateX(20px);
+  }
+}
+
+[data-sonner-toast] {
+  position: relative !important;
+  overflow: hidden !important;
+  border-radius: 10px !important;
+  font-family: var(--font-inter), sans-serif !important;
+  box-shadow: 0 4px 16px -2px rgba(0, 0, 0, 0.08), 0 2px 6px -1px rgba(0, 0, 0, 0.04) !important;
+  padding: 12px 36px 12px 14px !important;
+  animation: toast-slide-in 250ms cubic-bezier(0.22, 1, 0.36, 1) forwards !important;
+}
+
+[data-sonner-toast][data-removed="true"] {
+  animation: toast-slide-out 200ms cubic-bezier(0.22, 1, 0.36, 1) forwards !important;
+}
+
+/* 5-Second Linear Timer Line */
+[data-sonner-toast]::after {
+  content: "";
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  height: 2px;
+  transform-origin: left;
+  animation: toast-progress-countdown 5000ms linear forwards;
+  opacity: 0.9;
+  z-index: 10;
+}
+
+[data-sonner-toast][data-type="success"]::after {
+  background-color: hsl(var(--success));
+}
+
+[data-sonner-toast][data-type="error"]::after {
+  background-color: hsl(var(--destructive));
+}
+
+[data-sonner-toast][data-type="warning"]::after {
+  background-color: hsl(var(--warning));
+}
+
+[data-sonner-toast][data-type="info"]::after,
+[data-sonner-toast]:not([data-type])::after {
+  background-color: hsl(var(--primary));
+}
+
+/* Visible, Accessible Close Button */
+[data-sonner-toast] [data-close-button] {
+  opacity: 1 !important;
+  display: flex !important;
+  align-items: center;
+  justify-content: center;
+  position: absolute !important;
+  top: 10px !important;
+  right: 10px !important;
+  left: auto !important;
+  width: 20px !important;
+  height: 20px !important;
+  border-radius: 6px !important;
+  background: hsl(var(--muted) / 0.8) !important;
+  border: 1px solid hsl(var(--border) / 0.8) !important;
+  color: hsl(var(--muted-foreground)) !important;
+  cursor: pointer !important;
+  transition: all 120ms ease-in-out !important;
+  transform: none !important;
+}
+
+[data-sonner-toast] [data-close-button]:hover {
+  background: hsl(var(--accent)) !important;
+  color: hsl(var(--foreground)) !important;
+  border-color: hsl(var(--border)) !important;
+}
+
+/* Responsive constraints on mobile */
+@media (max-width: 640px) {
+  [data-sonner-toaster] {
+    right: 16px !important;
+    left: 16px !important;
+    width: auto !important;
+  }
+  [data-sonner-toast] {
+    width: 100% !important;
+    max-width: 100% !important;
+  }
+}
+
+/* ───────────────────────────────────────────────────────────── */
+/* Accessibility: prefers-reduced-motion handling               */
+/* ───────────────────────────────────────────────────────────── */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+  [data-sonner-toast]::after {
+    animation: none !important;
+  }
+}
+

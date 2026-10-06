@@ -1,0 +1,1079 @@
+import fs from "fs";
+import path from "path";
+import mongoose from "mongoose";
+import { User } from "../models/User.model";
+import { Lead } from "../models/Lead.model";
+import { ROLES } from "../constants/roles";
+import { DEPARTMENTS, LEAD_STATUS, WORKFLOW_ACTIONS } from "../constants/departments";
+import { connectDatabase, disconnectDatabase } from "../config/database";
+import { logger } from "../config/logger";
+import { env } from "../config/env";
+
+export const PRIMARY_DEMO_USERS = [
+  {
+    name: "Ananya Sharma",
+    email: "admin@vibhanu.com",
+    password: "VibhAnu@123",
+    role: ROLES.ADMIN,
+    department: "Executive Management",
+    avatar: "AS",
+  },
+  {
+    name: "Rohan Varma",
+    email: "marketing@vibhanu.com",
+    password: "VibhAnu@123",
+    role: ROLES.MARKETING,
+    department: "Growth & Acquisition",
+    avatar: "RV",
+  },
+  {
+    name: "Pooja Hegde",
+    email: "communication@vibhanu.com",
+    password: "VibhAnu@123",
+    role: ROLES.COMMUNICATION,
+    department: "Customer Outreach",
+    avatar: "PH",
+  },
+  {
+    name: "Vikram Malhotra",
+    email: "vigilance@vibhanu.com",
+    password: "VibhAnu@123",
+    role: ROLES.VIGILANCE,
+    department: "Compliance & Vigilance",
+    avatar: "VM",
+  },
+  {
+    name: "Neha Sundaram",
+    email: "support@vibhanu.com",
+    password: "VibhAnu@123",
+    role: ROLES.SUPPORT,
+    department: "Operations & Support",
+    avatar: "NS",
+  },
+  {
+    name: "Aditya Deshmukh",
+    email: "sales@vibhanu.com",
+    password: "VibhAnu@123",
+    role: ROLES.SALES,
+    department: "Enterprise Sales",
+    avatar: "AD",
+  },
+];
+
+// Alias accounts for name-based email logins
+export const ALIAS_DEMO_USERS = [
+  {
+    name: "Ananya Sharma",
+    email: "ananya.sharma@vibhanu.com",
+    password: "VibhAnu@123",
+    role: ROLES.ADMIN,
+    department: "Executive Management",
+    avatar: "AS",
+  },
+  {
+    name: "Rohan Varma",
+    email: "rohan.varma@vibhanu.com",
+    password: "VibhAnu@123",
+    role: ROLES.MARKETING,
+    department: "Growth & Acquisition",
+    avatar: "RV",
+  },
+  {
+    name: "Pooja Hegde",
+    email: "pooja.hegde@vibhanu.com",
+    password: "VibhAnu@123",
+    role: ROLES.COMMUNICATION,
+    department: "Customer Outreach",
+    avatar: "PH",
+  },
+  {
+    name: "Vikram Malhotra",
+    email: "vikram.malhotra@vibhanu.com",
+    password: "VibhAnu@123",
+    role: ROLES.VIGILANCE,
+    department: "Compliance & Vigilance",
+    avatar: "VM",
+  },
+  {
+    name: "Neha Sundaram",
+    email: "neha.sundaram@vibhanu.com",
+    password: "VibhAnu@123",
+    role: ROLES.SUPPORT,
+    department: "Operations & Support",
+    avatar: "NS",
+  },
+  {
+    name: "Aditya Deshmukh",
+    email: "aditya.deshmukh@vibhanu.com",
+    password: "VibhAnu@123",
+    role: ROLES.SALES,
+    department: "Enterprise Sales",
+    avatar: "AD",
+  },
+];
+
+// Helper to ensure demo audio file exists in uploads folder
+export function ensureDemoAudioFile(): string {
+  const uploadDir = path.resolve(process.cwd(), env.UPLOAD_DIR);
+  if (!fs.existsSync(uploadDir)) {
+    fs.mkdirSync(uploadDir, { recursive: true });
+  }
+
+  const demoFilename = "audio_demo_sample_call.wav";
+  const targetPath = path.resolve(uploadDir, demoFilename);
+
+  // Also check if public sample exists in frontend public
+  const rootAudio = path.resolve(process.cwd(), "..", "public", "audio", "sample-call.wav");
+  if (fs.existsSync(rootAudio)) {
+    fs.copyFileSync(rootAudio, targetPath);
+  } else if (!fs.existsSync(targetPath)) {
+    // Generate valid 10-second sample WAV file
+    const sampleRate = 22050;
+    const duration = 10;
+    const numSamples = sampleRate * duration;
+    const buffer = Buffer.alloc(44 + numSamples * 2);
+
+    buffer.write("RIFF", 0);
+    buffer.writeUInt32LE(36 + numSamples * 2, 4);
+    buffer.write("WAVE", 8);
+    buffer.write("fmt ", 12);
+    buffer.writeUInt32LE(16, 16);
+    buffer.writeUInt16LE(1, 20); // PCM
+    buffer.writeUInt16LE(1, 22); // mono
+    buffer.writeUInt32LE(sampleRate, 24);
+    buffer.writeUInt32LE(sampleRate * 2, 28);
+    buffer.writeUInt16LE(2, 32);
+    buffer.writeUInt16LE(16, 34);
+    buffer.write("data", 36);
+    buffer.writeUInt32LE(numSamples * 2, 40);
+
+    let offset = 44;
+    for (let i = 0; i < numSamples; i++) {
+      const t = i / sampleRate;
+      const s = 0.2 * Math.sin(2 * Math.PI * 440 * t);
+      buffer.writeInt16LE(Math.floor(s * 32767), offset);
+      offset += 2;
+    }
+    fs.writeFileSync(targetPath, buffer);
+  }
+
+  return demoFilename;
+}
+
+export function buildDemoLeads(demoAudioFile: string, salesUserId?: string) {
+  const now = Date.now();
+  const formatIso = (offsetMs: number) => new Date(now + offsetMs).toISOString();
+  const formatDateOnly = (offsetDays: number) => {
+    const d = new Date(now + offsetDays * 86400000);
+    return d.toISOString().split("T")[0];
+  };
+
+  const today = formatDateOnly(0);
+  const tomorrow = formatDateOnly(1);
+  const inTwoDays = formatDateOnly(2);
+  const yesterday = formatDateOnly(-1);
+  const twoDaysAgo = formatDateOnly(-2);
+  const threeDaysAgo = formatDateOnly(-3);
+  const fourDaysAgo = formatDateOnly(-4);
+
+  return [
+    // ==============================================================
+    // 1. MARKETING LEADS (3 Leads)
+    // ==============================================================
+    {
+      leadCode: "VA-2026-1001",
+      name: "Nexus Enterprises",
+      contactNumber: "+91 98201 44521",
+      city: "Mumbai",
+      state: "Maharashtra",
+      pincode: "400051",
+      postalAddress: "C-22, G Block, Bandra Kurla Complex",
+      currentDepartment: DEPARTMENTS.MARKETING,
+      status: LEAD_STATUS.NEW,
+      createdBy: "Rohan Varma (MARKETING)",
+      remark: "Inbound enterprise inquiry via Cloud ERP landing page. Requesting 50+ user licenses.",
+      workflowHistory: [
+        {
+          id: `wf_${now}_1001`,
+          department: DEPARTMENTS.MARKETING,
+          action: WORKFLOW_ACTIONS.LEAD_CREATED,
+          userName: "Rohan Varma",
+          userRole: ROLES.MARKETING,
+          timestamp: formatIso(-3600000 * 6),
+          description: "Inbound campaign submission captured from official portal.",
+        },
+      ],
+    },
+    {
+      leadCode: "VA-2026-1002",
+      name: "Apex Infotech",
+      contactNumber: "+91 98112 30495",
+      city: "New Delhi",
+      state: "Delhi",
+      pincode: "110001",
+      postalAddress: "14, Barakhamba Road, Connaught Place",
+      currentDepartment: DEPARTMENTS.MARKETING,
+      status: LEAD_STATUS.NEW,
+      createdBy: "Rohan Varma (MARKETING)",
+      remark: "Captured at North India Tech Expo 2026. Needs multi-branch CRM integration.",
+      workflowHistory: [
+        {
+          id: `wf_${now}_1002`,
+          department: DEPARTMENTS.MARKETING,
+          action: WORKFLOW_ACTIONS.LEAD_CREATED,
+          userName: "Rohan Varma",
+          userRole: ROLES.MARKETING,
+          timestamp: formatIso(-3600000 * 12),
+          description: "Registered lead from delegate badge scan.",
+        },
+      ],
+    },
+    {
+      leadCode: "VA-2026-1003",
+      name: "BluePeak Solutions",
+      contactNumber: "+91 99104 88723",
+      city: "Noida",
+      state: "Uttar Pradesh",
+      pincode: "201301",
+      postalAddress: "Tower B, Logix Cyber Park, Sector 62",
+      currentDepartment: DEPARTMENTS.MARKETING,
+      status: LEAD_STATUS.IN_PROGRESS,
+      createdBy: "Rohan Varma (MARKETING)",
+      remark: "Direct web form inquiry. Assessing migration timeline from legacy CRM.",
+      workflowHistory: [
+        {
+          id: `wf_${now}_1003`,
+          department: DEPARTMENTS.MARKETING,
+          action: WORKFLOW_ACTIONS.LEAD_CREATED,
+          userName: "Rohan Varma",
+          userRole: ROLES.MARKETING,
+          timestamp: formatIso(-3600000 * 18),
+          description: "Direct web inquiry logged by marketing automation webhook.",
+        },
+      ],
+    },
+
+    // ==============================================================
+    // 2. COMMUNICATION LEADS (3 Leads)
+    // ==============================================================
+    {
+      leadCode: "VA-2026-1004",
+      name: "Vertex Retail",
+      contactNumber: "+91 98105 77612",
+      city: "Gurugram",
+      state: "Haryana",
+      pincode: "122002",
+      postalAddress: "8th Floor, DLF Cyber City, Phase 2",
+      currentDepartment: DEPARTMENTS.COMMUNICATION,
+      status: LEAD_STATUS.IN_PROGRESS,
+      createdBy: "Rohan Varma (MARKETING)",
+      remark: "Initial call connected. Procurement manager requested demo schedule for this week.",
+      workflowHistory: [
+        {
+          id: `wf_${now}_1004a`,
+          department: DEPARTMENTS.MARKETING,
+          action: WORKFLOW_ACTIONS.LEAD_CREATED,
+          userName: "Rohan Varma",
+          userRole: ROLES.MARKETING,
+          timestamp: formatIso(-3600000 * 24),
+          description: "Lead created from marketing campaign.",
+        },
+        {
+          id: `wf_${now}_1004b`,
+          department: DEPARTMENTS.COMMUNICATION,
+          action: WORKFLOW_ACTIONS.STATUS_UPDATED,
+          userName: "Pooja Hegde",
+          userRole: ROLES.COMMUNICATION,
+          timestamp: formatIso(-3600000 * 16),
+          description: "Outreach call placed. Client requested meeting schedule confirmation.",
+        },
+      ],
+    },
+    {
+      leadCode: "VA-2026-1005",
+      name: "UrbanEdge Trading",
+      contactNumber: "+91 94150 63219",
+      city: "Lucknow",
+      state: "Uttar Pradesh",
+      pincode: "226010",
+      postalAddress: "Plot 45, Gomti Nagar Business Park",
+      date: tomorrow,
+      time: "02:30 PM",
+      currentDepartment: DEPARTMENTS.COMMUNICATION,
+      status: LEAD_STATUS.MEETING_SCHEDULED,
+      createdBy: "Rohan Varma (MARKETING)",
+      remark: "Introductory demo meeting scheduled. Discussion on automated invoice reconciliation.",
+      communicationDetails: {
+        scheduledDate: tomorrow,
+        scheduledTime: "02:30 PM",
+        meetingNotes: "CFO confirmed attendance. Send calendar invite with Zoom link.",
+        completedAt: formatIso(-3600000 * 8),
+        completedBy: "Pooja Hegde (COMMUNICATION)",
+      },
+      workflowHistory: [
+        {
+          id: `wf_${now}_1005a`,
+          department: DEPARTMENTS.MARKETING,
+          action: WORKFLOW_ACTIONS.LEAD_CREATED,
+          userName: "Rohan Varma",
+          userRole: ROLES.MARKETING,
+          timestamp: formatIso(-3600000 * 28),
+          description: "Lead created.",
+        },
+        {
+          id: `wf_${now}_1005b`,
+          department: DEPARTMENTS.COMMUNICATION,
+          action: WORKFLOW_ACTIONS.MEETING_SCHEDULED,
+          userName: "Pooja Hegde",
+          userRole: ROLES.COMMUNICATION,
+          timestamp: formatIso(-3600000 * 8),
+          description: `Meeting confirmed for ${tomorrow} at 02:30 PM.`,
+        },
+      ],
+    },
+    {
+      leadCode: "VA-2026-1006",
+      name: "PrimeTech Systems",
+      contactNumber: "+91 98230 45129",
+      city: "Pune",
+      state: "Maharashtra",
+      pincode: "411028",
+      postalAddress: "Level 5, Cybercity Tower 2, Magarpatta",
+      date: inTwoDays,
+      time: "11:00 AM",
+      currentDepartment: DEPARTMENTS.COMMUNICATION,
+      status: LEAD_STATUS.MEETING_SCHEDULED,
+      createdBy: "Rohan Varma (MARKETING)",
+      remark: "Virtual meeting fixed with IT Director regarding data migration and security architecture.",
+      communicationDetails: {
+        scheduledDate: inTwoDays,
+        scheduledTime: "11:00 AM",
+        meetingNotes: "IT infrastructure review scheduled with engineering team.",
+        completedAt: formatIso(-3600000 * 4),
+        completedBy: "Pooja Hegde (COMMUNICATION)",
+      },
+      workflowHistory: [
+        {
+          id: `wf_${now}_1006a`,
+          department: DEPARTMENTS.MARKETING,
+          action: WORKFLOW_ACTIONS.LEAD_CREATED,
+          userName: "Rohan Varma",
+          userRole: ROLES.MARKETING,
+          timestamp: formatIso(-3600000 * 30),
+          description: "Inbound campaign submission.",
+        },
+        {
+          id: `wf_${now}_1006b`,
+          department: DEPARTMENTS.COMMUNICATION,
+          action: WORKFLOW_ACTIONS.MEETING_SCHEDULED,
+          userName: "Pooja Hegde",
+          userRole: ROLES.COMMUNICATION,
+          timestamp: formatIso(-3600000 * 4),
+          description: `Meeting scheduled for ${inTwoDays} at 11:00 AM.`,
+        },
+      ],
+    },
+
+    // ==============================================================
+    // 3. VIGILANCE LEADS (3 Leads)
+    // ==============================================================
+    {
+      leadCode: "VA-2026-1007",
+      name: "GreenLeaf Industries",
+      contactNumber: "+91 94140 23891",
+      city: "Jaipur",
+      state: "Rajasthan",
+      pincode: "302022",
+      postalAddress: "F-120, Sitapura Industrial Area",
+      date: yesterday,
+      time: "03:00 PM",
+      currentDepartment: DEPARTMENTS.VIGILANCE,
+      status: LEAD_STATUS.MEETING_SCHEDULED,
+      createdBy: "Rohan Varma (MARKETING)",
+      remark: "Meeting completed by Communication. Pending phone audit & audio call recording upload.",
+      communicationDetails: {
+        scheduledDate: yesterday,
+        scheduledTime: "03:00 PM",
+        meetingNotes: "Introductory meeting completed. Lead forwarded to Vigilance for telephonic audit.",
+        completedAt: formatIso(-3600000 * 20),
+        completedBy: "Pooja Hegde (COMMUNICATION)",
+      },
+      // Missing audio on purpose - gives Vigilance dashboard real pending audio alert!
+      workflowHistory: [
+        {
+          id: `wf_${now}_1007a`,
+          department: DEPARTMENTS.MARKETING,
+          action: WORKFLOW_ACTIONS.LEAD_CREATED,
+          userName: "Rohan Varma",
+          userRole: ROLES.MARKETING,
+          timestamp: formatIso(-3600000 * 36),
+          description: "Lead created.",
+        },
+        {
+          id: `wf_${now}_1007b`,
+          department: DEPARTMENTS.COMMUNICATION,
+          action: WORKFLOW_ACTIONS.MEETING_SCHEDULED,
+          userName: "Pooja Hegde",
+          userRole: ROLES.COMMUNICATION,
+          timestamp: formatIso(-3600000 * 20),
+          description: "Meeting held. Transferred to Vigilance for identity & audio verification.",
+        },
+      ],
+    },
+    {
+      leadCode: "VA-2026-1008",
+      name: "Nova Business Solutions",
+      contactNumber: "+91 98450 19823",
+      city: "Bengaluru",
+      state: "Karnataka",
+      pincode: "560103",
+      postalAddress: "Building 9, Embassy TechVillage, Outer Ring Road",
+      date: yesterday,
+      time: "04:30 PM",
+      currentDepartment: DEPARTMENTS.VIGILANCE,
+      status: LEAD_STATUS.IN_PROGRESS,
+      createdBy: "Rohan Varma (MARKETING)",
+      remark: "Verification call initiated. Awaiting GST certificate verification before finalizing audio.",
+      communicationDetails: {
+        scheduledDate: yesterday,
+        scheduledTime: "04:30 PM",
+        meetingNotes: "Meeting wrapped up. Handed over to Vigilance.",
+        completedAt: formatIso(-3600000 * 18),
+        completedBy: "Pooja Hegde (COMMUNICATION)",
+      },
+      workflowHistory: [
+        {
+          id: `wf_${now}_1008a`,
+          department: DEPARTMENTS.MARKETING,
+          action: WORKFLOW_ACTIONS.LEAD_CREATED,
+          userName: "Rohan Varma",
+          userRole: ROLES.MARKETING,
+          timestamp: formatIso(-3600000 * 40),
+          description: "Lead created.",
+        },
+        {
+          id: `wf_${now}_1008b`,
+          department: DEPARTMENTS.COMMUNICATION,
+          action: WORKFLOW_ACTIONS.MEETING_SCHEDULED,
+          userName: "Pooja Hegde",
+          userRole: ROLES.COMMUNICATION,
+          timestamp: formatIso(-3600000 * 18),
+          description: "Client confirmed interest. Shifted to Vigilance.",
+        },
+      ],
+    },
+    {
+      leadCode: "VA-2026-1009",
+      name: "ZenCloud Technologies",
+      contactNumber: "+91 98490 32174",
+      city: "Hyderabad",
+      state: "Telangana",
+      pincode: "500081",
+      postalAddress: "HITEC City Phase 2, Madhapur",
+      date: yesterday,
+      time: "10:30 AM",
+      currentDepartment: DEPARTMENTS.VIGILANCE,
+      status: LEAD_STATUS.VERIFIED,
+      createdBy: "Rohan Varma (MARKETING)",
+      remark: "Verification call completed. ROC & registered address confirmed via telephonic audit.",
+      communicationDetails: {
+        scheduledDate: yesterday,
+        scheduledTime: "10:30 AM",
+        completedAt: formatIso(-3600000 * 24),
+        completedBy: "Pooja Hegde (COMMUNICATION)",
+      },
+      vigilanceDetails: {
+        audio: {
+          id: "aud_1009",
+          fileName: "Vigilance_Call_ZenCloud_Hyderabad.wav",
+          originalName: "Vigilance_Call_ZenCloud_Hyderabad.wav",
+          fileSize: 1058444,
+          duration: 180,
+          url: "/api/leads/VA-2026-1009/audio",
+          storagePath: demoAudioFile,
+          mimeType: "audio/wav",
+          uploadedAt: formatIso(-3600000 * 10),
+          uploadedBy: "Vikram Malhotra (VIGILANCE)",
+          waveformSample: [35, 55, 70, 85, 90, 75, 60, 50, 65, 80, 70, 45, 30],
+        },
+        verificationNotes: "All statutory records verified. Client confirmed corporate office location.",
+        completedAt: formatIso(-3600000 * 10),
+        completedBy: "Vikram Malhotra (VIGILANCE)",
+      },
+      workflowHistory: [
+        {
+          id: `wf_${now}_1009a`,
+          department: DEPARTMENTS.MARKETING,
+          action: WORKFLOW_ACTIONS.LEAD_CREATED,
+          userName: "Rohan Varma",
+          userRole: ROLES.MARKETING,
+          timestamp: formatIso(-3600000 * 42),
+          description: "Lead created.",
+        },
+        {
+          id: `wf_${now}_1009b`,
+          department: DEPARTMENTS.COMMUNICATION,
+          action: WORKFLOW_ACTIONS.MEETING_SCHEDULED,
+          userName: "Pooja Hegde",
+          userRole: ROLES.COMMUNICATION,
+          timestamp: formatIso(-3600000 * 24),
+          description: "Meeting held.",
+        },
+        {
+          id: `wf_${now}_1009c`,
+          department: DEPARTMENTS.VIGILANCE,
+          action: WORKFLOW_ACTIONS.VERIFIED_AND_AUDIO_UPLOADED,
+          userName: "Vikram Malhotra",
+          userRole: ROLES.VIGILANCE,
+          timestamp: formatIso(-3600000 * 10),
+          description: "Vigilance audit passed. Mandatory audio uploaded.",
+        },
+      ],
+    },
+
+    // ==============================================================
+    // 4. SUPPORT LEADS (2 Leads)
+    // ==============================================================
+    {
+      leadCode: "VA-2026-1010",
+      name: "Horizon Automations",
+      contactNumber: "+91 98250 66782",
+      city: "Ahmedabad",
+      state: "Gujarat",
+      pincode: "382024",
+      postalAddress: "Plot 18, GIDC Electronic Estate, Sector 25",
+      date: twoDaysAgo,
+      time: "03:00 PM",
+      currentDepartment: DEPARTMENTS.SUPPORT,
+      status: LEAD_STATUS.VERIFIED, // READY FOR ALLOCATION!
+      createdBy: "Rohan Varma (MARKETING)",
+      remark: "Vigilance cleared with audio recording. Ready for 3-point checklist verification and allocation.",
+      vigilanceDetails: {
+        audio: {
+          id: "aud_1010",
+          fileName: "Vigilance_Call_HorizonAutomations.wav",
+          originalName: "Vigilance_Call_HorizonAutomations.wav",
+          fileSize: 1058444,
+          duration: 180,
+          url: "/api/leads/VA-2026-1010/audio",
+          storagePath: demoAudioFile,
+          mimeType: "audio/wav",
+          uploadedAt: formatIso(-3600000 * 16),
+          uploadedBy: "Vikram Malhotra (VIGILANCE)",
+          waveformSample: [25, 45, 65, 80, 85, 70, 55, 65, 75, 60, 45, 30],
+        },
+        verificationNotes: "Registered business premises confirmed.",
+        completedAt: formatIso(-3600000 * 16),
+        completedBy: "Vikram Malhotra (VIGILANCE)",
+      },
+      supportDetails: {
+        verification: {
+          isDateVerified: false,
+          isTimeVerified: false,
+          isAddressVerified: false,
+        },
+      },
+      workflowHistory: [
+        {
+          id: `wf_${now}_1010a`,
+          department: DEPARTMENTS.MARKETING,
+          action: WORKFLOW_ACTIONS.LEAD_CREATED,
+          userName: "Rohan Varma",
+          userRole: ROLES.MARKETING,
+          timestamp: formatIso(-3600000 * 48),
+          description: "Inbound campaign lead created.",
+        },
+        {
+          id: `wf_${now}_1010b`,
+          department: DEPARTMENTS.COMMUNICATION,
+          action: WORKFLOW_ACTIONS.MEETING_SCHEDULED,
+          userName: "Pooja Hegde",
+          userRole: ROLES.COMMUNICATION,
+          timestamp: formatIso(-3600000 * 32),
+          description: "Meeting scheduled.",
+        },
+        {
+          id: `wf_${now}_1010c`,
+          department: DEPARTMENTS.VIGILANCE,
+          action: WORKFLOW_ACTIONS.VERIFIED_AND_AUDIO_UPLOADED,
+          userName: "Vikram Malhotra",
+          userRole: ROLES.VIGILANCE,
+          timestamp: formatIso(-3600000 * 16),
+          description: "Verification call recorded and approved. Shifted to Support.",
+        },
+      ],
+    },
+    {
+      leadCode: "VA-2026-1011",
+      name: "Bharat Logistics Corp",
+      contactNumber: "+91 98302 99401",
+      city: "Kolkata",
+      state: "West Bengal",
+      pincode: "700001",
+      postalAddress: "Strand Road, Dalhousie Square, BBD Bagh",
+      date: twoDaysAgo,
+      time: "12:00 PM",
+      currentDepartment: DEPARTMENTS.SUPPORT,
+      status: LEAD_STATUS.ALLOCATED, // ALLOCATED TO SALES!
+      createdBy: "Rohan Varma (MARKETING)",
+      remark: "3-point verification completed (Date, Time, Address). Allocated to Enterprise Sales.",
+      vigilanceDetails: {
+        audio: {
+          id: "aud_1011",
+          fileName: "Vigilance_Call_BharatLogistics.wav",
+          originalName: "Vigilance_Call_BharatLogistics.wav",
+          fileSize: 1058444,
+          duration: 180,
+          url: "/api/leads/VA-2026-1011/audio",
+          storagePath: demoAudioFile,
+          mimeType: "audio/wav",
+          uploadedAt: formatIso(-3600000 * 22),
+          uploadedBy: "Vikram Malhotra (VIGILANCE)",
+          waveformSample: [30, 50, 75, 90, 80, 60, 45, 65, 85, 75, 50, 35],
+        },
+        verificationNotes: "Telephonic identity check cleared.",
+        completedAt: formatIso(-3600000 * 22),
+        completedBy: "Vikram Malhotra (VIGILANCE)",
+      },
+      supportDetails: {
+        verification: {
+          isDateVerified: true,
+          isTimeVerified: true,
+          isAddressVerified: true,
+          verifiedBy: "Neha Sundaram (SUPPORT)",
+          verifiedAt: formatIso(-3600000 * 12),
+          notes: "Date, time, and corporate physical address re-verified with regional head.",
+        },
+        allocatedTo: "Aditya Deshmukh (Sales Executive)",
+        allocationNotes: "High priority enterprise logistics deal. Estimated value: ₹7,50,000.",
+        completedAt: formatIso(-3600000 * 12),
+        completedBy: "Neha Sundaram (SUPPORT)",
+      },
+      workflowHistory: [
+        {
+          id: `wf_${now}_1011a`,
+          department: DEPARTMENTS.MARKETING,
+          action: WORKFLOW_ACTIONS.LEAD_CREATED,
+          userName: "Rohan Varma",
+          userRole: ROLES.MARKETING,
+          timestamp: formatIso(-3600000 * 52),
+          description: "Lead created.",
+        },
+        {
+          id: `wf_${now}_1011b`,
+          department: DEPARTMENTS.COMMUNICATION,
+          action: WORKFLOW_ACTIONS.MEETING_SCHEDULED,
+          userName: "Pooja Hegde",
+          userRole: ROLES.COMMUNICATION,
+          timestamp: formatIso(-3600000 * 36),
+          description: "Meeting scheduled.",
+        },
+        {
+          id: `wf_${now}_1011c`,
+          department: DEPARTMENTS.VIGILANCE,
+          action: WORKFLOW_ACTIONS.VERIFIED_AND_AUDIO_UPLOADED,
+          userName: "Vikram Malhotra",
+          userRole: ROLES.VIGILANCE,
+          timestamp: formatIso(-3600000 * 22),
+          description: "Audit audio recorded.",
+        },
+        {
+          id: `wf_${now}_1011d`,
+          department: DEPARTMENTS.SUPPORT,
+          action: WORKFLOW_ACTIONS.ALLOCATED_TO_SALES,
+          userName: "Neha Sundaram",
+          userRole: ROLES.SUPPORT,
+          timestamp: formatIso(-3600000 * 12),
+          description: "3-point verification confirmed. Allocated to Aditya Deshmukh.",
+        },
+      ],
+    },
+
+    // ==============================================================
+    // 5. SALES LEADS (2 Leads)
+    // ==============================================================
+    {
+      leadCode: "VA-2026-1012",
+      name: "Spectra Analytics",
+      contactNumber: "+91 97909 31450",
+      city: "Chennai",
+      state: "Tamil Nadu",
+      pincode: "600113",
+      postalAddress: "Level 6, Ascendas IT Park, Taramani",
+      date: threeDaysAgo,
+      time: "02:00 PM",
+      currentDepartment: DEPARTMENTS.SALES,
+      status: LEAD_STATUS.ALLOCATED,
+      createdBy: "Rohan Varma (MARKETING)",
+      remark: "Lead allocated to Sales. Audio recording pending review. Claim button locked until 100% audio listened.",
+      vigilanceDetails: {
+        audio: {
+          id: "aud_1012",
+          fileName: "Vigilance_Call_SpectraAnalytics_Chennai.wav",
+          originalName: "Vigilance_Call_SpectraAnalytics_Chennai.wav",
+          fileSize: 1058444,
+          duration: 180,
+          url: "/api/leads/VA-2026-1012/audio",
+          storagePath: demoAudioFile,
+          mimeType: "audio/wav",
+          uploadedAt: formatIso(-3600000 * 30),
+          uploadedBy: "Vikram Malhotra (VIGILANCE)",
+          waveformSample: [28, 48, 68, 88, 78, 62, 48, 68, 82, 72, 48, 32],
+        },
+        verificationNotes: "Identity and company presence verified.",
+        completedAt: formatIso(-3600000 * 30),
+        completedBy: "Vikram Malhotra (VIGILANCE)",
+      },
+      supportDetails: {
+        verification: {
+          isDateVerified: true,
+          isTimeVerified: true,
+          isAddressVerified: true,
+          verifiedBy: "Neha Sundaram (SUPPORT)",
+          verifiedAt: formatIso(-3600000 * 18),
+          notes: "Address confirmed at Ascendas IT Park.",
+        },
+        allocatedTo: "Aditya Deshmukh (Sales Executive)",
+        allocationNotes: "High probability conversion. 35 seat enterprise tier.",
+        completedAt: formatIso(-3600000 * 18),
+        completedBy: "Neha Sundaram (SUPPORT)",
+      },
+      salesDetails: {
+        audioListenCompleted: false, // AUDIO LOCKED: Must listen to full audio before claim button unlocks!
+      },
+      workflowHistory: [
+        {
+          id: `wf_${now}_1012a`,
+          department: DEPARTMENTS.MARKETING,
+          action: WORKFLOW_ACTIONS.LEAD_CREATED,
+          userName: "Rohan Varma",
+          userRole: ROLES.MARKETING,
+          timestamp: formatIso(-3600000 * 56),
+          description: "Inbound campaign submission.",
+        },
+        {
+          id: `wf_${now}_1012b`,
+          department: DEPARTMENTS.COMMUNICATION,
+          action: WORKFLOW_ACTIONS.MEETING_SCHEDULED,
+          userName: "Pooja Hegde",
+          userRole: ROLES.COMMUNICATION,
+          timestamp: formatIso(-3600000 * 40),
+          description: "Meeting completed.",
+        },
+        {
+          id: `wf_${now}_1012c`,
+          department: DEPARTMENTS.VIGILANCE,
+          action: WORKFLOW_ACTIONS.VERIFIED_AND_AUDIO_UPLOADED,
+          userName: "Vikram Malhotra",
+          userRole: ROLES.VIGILANCE,
+          timestamp: formatIso(-3600000 * 30),
+          description: "Call recording attached and verified.",
+        },
+        {
+          id: `wf_${now}_1012d`,
+          department: DEPARTMENTS.SUPPORT,
+          action: WORKFLOW_ACTIONS.ALLOCATED_TO_SALES,
+          userName: "Neha Sundaram",
+          userRole: ROLES.SUPPORT,
+          timestamp: formatIso(-3600000 * 18),
+          description: "3-point verification confirmed. Allocated to Sales Executive: Aditya Deshmukh.",
+        },
+      ],
+    },
+    {
+      leadCode: "VA-2026-1013",
+      name: "Kuber FinTech Systems",
+      contactNumber: "+91 98260 54318",
+      city: "Indore",
+      state: "Madhya Pradesh",
+      pincode: "452010",
+      postalAddress: "Scheme 54, Vijay Nagar Commercial Complex",
+      date: threeDaysAgo,
+      time: "04:00 PM",
+      currentDepartment: DEPARTMENTS.SALES,
+      status: LEAD_STATUS.ALLOCATED,
+      createdBy: "Rohan Varma (MARKETING)",
+      remark: "Audio playback completed by Sales Executive. Ready to claim with final deal value.",
+      vigilanceDetails: {
+        audio: {
+          id: "aud_1013",
+          fileName: "Vigilance_Call_KuberFinTech_Indore.wav",
+          originalName: "Vigilance_Call_KuberFinTech_Indore.wav",
+          fileSize: 1058444,
+          duration: 180,
+          url: "/api/leads/VA-2026-1013/audio",
+          storagePath: demoAudioFile,
+          mimeType: "audio/wav",
+          uploadedAt: formatIso(-3600000 * 32),
+          uploadedBy: "Vikram Malhotra (VIGILANCE)",
+          waveformSample: [32, 52, 72, 88, 82, 64, 50, 70, 84, 76, 52, 36],
+        },
+        verificationNotes: "Identity and business license verified.",
+        completedAt: formatIso(-3600000 * 32),
+        completedBy: "Vikram Malhotra (VIGILANCE)",
+      },
+      supportDetails: {
+        verification: {
+          isDateVerified: true,
+          isTimeVerified: true,
+          isAddressVerified: true,
+          verifiedBy: "Neha Sundaram (SUPPORT)",
+          verifiedAt: formatIso(-3600000 * 20),
+        },
+        allocatedTo: "Aditya Deshmukh (Sales Executive)",
+        completedAt: formatIso(-3600000 * 20),
+        completedBy: "Neha Sundaram (SUPPORT)",
+      },
+      salesDetails: {
+        audioListenCompleted: true, // READY TO CLAIM! Interviewer can immediately enter deal value and click Claim!
+      },
+      workflowHistory: [
+        {
+          id: `wf_${now}_1013a`,
+          department: DEPARTMENTS.MARKETING,
+          action: WORKFLOW_ACTIONS.LEAD_CREATED,
+          userName: "Rohan Varma",
+          userRole: ROLES.MARKETING,
+          timestamp: formatIso(-3600000 * 58),
+          description: "Inbound campaign submission.",
+        },
+        {
+          id: `wf_${now}_1013b`,
+          department: DEPARTMENTS.COMMUNICATION,
+          action: WORKFLOW_ACTIONS.MEETING_SCHEDULED,
+          userName: "Pooja Hegde",
+          userRole: ROLES.COMMUNICATION,
+          timestamp: formatIso(-3600000 * 42),
+          description: "Meeting completed.",
+        },
+        {
+          id: `wf_${now}_1013c`,
+          department: DEPARTMENTS.VIGILANCE,
+          action: WORKFLOW_ACTIONS.VERIFIED_AND_AUDIO_UPLOADED,
+          userName: "Vikram Malhotra",
+          userRole: ROLES.VIGILANCE,
+          timestamp: formatIso(-3600000 * 32),
+          description: "Audio verified.",
+        },
+        {
+          id: `wf_${now}_1013d`,
+          department: DEPARTMENTS.SUPPORT,
+          action: WORKFLOW_ACTIONS.ALLOCATED_TO_SALES,
+          userName: "Neha Sundaram",
+          userRole: ROLES.SUPPORT,
+          timestamp: formatIso(-3600000 * 20),
+          description: "Allocated to Sales Executive: Aditya Deshmukh.",
+        },
+      ],
+    },
+
+    // ==============================================================
+    // 6. CLAIMED LEADS (1 Lead)
+    // ==============================================================
+    {
+      leadCode: "VA-2026-1014",
+      name: "OceanWave Maritime",
+      contactNumber: "+91 94471 88234",
+      city: "Kochi",
+      state: "Kerala",
+      pincode: "682003",
+      postalAddress: "Harbour View Tower, Willingdon Island",
+      date: fourDaysAgo,
+      time: "11:30 AM",
+      currentDepartment: DEPARTMENTS.CLAIMED,
+      status: LEAD_STATUS.CLAIMED,
+      createdBy: "Rohan Varma (MARKETING)",
+      remark: "Successfully closed enterprise deal for maritime cargo tracking workflow.",
+      vigilanceDetails: {
+        audio: {
+          id: "aud_1014",
+          fileName: "Vigilance_Call_OceanWave_Kochi.wav",
+          originalName: "Vigilance_Call_OceanWave_Kochi.wav",
+          fileSize: 1058444,
+          duration: 195,
+          url: "/api/leads/VA-2026-1014/audio",
+          storagePath: demoAudioFile,
+          mimeType: "audio/wav",
+          uploadedAt: formatIso(-3600000 * 72),
+          uploadedBy: "Vikram Malhotra (VIGILANCE)",
+          waveformSample: [30, 45, 60, 80, 95, 80, 65, 70, 85, 90, 75, 60, 45, 30],
+        },
+        verificationNotes: "Audit verified and confirmed.",
+        completedAt: formatIso(-3600000 * 72),
+        completedBy: "Vikram Malhotra (VIGILANCE)",
+      },
+      supportDetails: {
+        verification: {
+          isDateVerified: true,
+          isTimeVerified: true,
+          isAddressVerified: true,
+          verifiedBy: "Neha Sundaram (SUPPORT)",
+          verifiedAt: formatIso(-3600000 * 60),
+        },
+        allocatedTo: "Aditya Deshmukh (Sales Executive)",
+        completedAt: formatIso(-3600000 * 60),
+        completedBy: "Neha Sundaram (SUPPORT)",
+      },
+      salesDetails: {
+        audioListenCompleted: true,
+        claimedBy: "Aditya Deshmukh (SALES)",
+        claimedById: salesUserId,
+        claimedAt: formatIso(-3600000 * 24),
+        dealValue: 500000,
+        closingRemarks: "Client signed 3-year enterprise contract. Onboarding scheduled for Q4.",
+      },
+      workflowHistory: [
+        {
+          id: `wf_${now}_1014a`,
+          department: DEPARTMENTS.MARKETING,
+          action: WORKFLOW_ACTIONS.LEAD_CREATED,
+          userName: "Rohan Varma",
+          userRole: ROLES.MARKETING,
+          timestamp: formatIso(-3600000 * 80),
+          description: "Registered lead from marketing campaign.",
+        },
+        {
+          id: `wf_${now}_1014b`,
+          department: DEPARTMENTS.COMMUNICATION,
+          action: WORKFLOW_ACTIONS.MEETING_SCHEDULED,
+          userName: "Pooja Hegde",
+          userRole: ROLES.COMMUNICATION,
+          timestamp: formatIso(-3600000 * 76),
+          description: "Introductory meeting scheduled.",
+        },
+        {
+          id: `wf_${now}_1014c`,
+          department: DEPARTMENTS.VIGILANCE,
+          action: WORKFLOW_ACTIONS.VERIFIED_AND_AUDIO_UPLOADED,
+          userName: "Vikram Malhotra",
+          userRole: ROLES.VIGILANCE,
+          timestamp: formatIso(-3600000 * 72),
+          description: "Call recording attached and verified.",
+        },
+        {
+          id: `wf_${now}_1014d`,
+          department: DEPARTMENTS.SUPPORT,
+          action: WORKFLOW_ACTIONS.ALLOCATED_TO_SALES,
+          userName: "Neha Sundaram",
+          userRole: ROLES.SUPPORT,
+          timestamp: formatIso(-3600000 * 60),
+          description: "3-point verification confirmed. Allocated to Aditya Deshmukh.",
+        },
+        {
+          id: `wf_${now}_1014e`,
+          department: DEPARTMENTS.SALES,
+          action: WORKFLOW_ACTIONS.AUDIO_LISTENED_AND_CLAIMED,
+          userName: "Aditya Deshmukh",
+          userRole: ROLES.SALES,
+          timestamp: formatIso(-3600000 * 24),
+          description: "Full audio listened. Claimed lead and closed contract (₹5,00,000).",
+          metadata: { dealValue: 500000 },
+        },
+      ],
+    },
+  ];
+}
+
+export async function seedDatabase(): Promise<{
+  usersCreated: number;
+  usersUpdated: number;
+  leadsCreated: number;
+  leadsUpdated: number;
+}> {
+  const demoAudioFile = ensureDemoAudioFile();
+
+  // 1. Seed Users Idempotently
+  let usersCreated = 0;
+  let usersUpdated = 0;
+  const allUsersToSeed = [...PRIMARY_DEMO_USERS, ...ALIAS_DEMO_USERS];
+
+  for (const u of allUsersToSeed) {
+    const existing = await User.findOne({ email: u.email });
+    if (!existing) {
+      const user = new User(u);
+      await user.save();
+      usersCreated++;
+    } else {
+      existing.name = u.name;
+      existing.role = u.role;
+      existing.department = u.department;
+      existing.avatar = u.avatar;
+      existing.password = u.password;
+      await existing.save();
+      usersUpdated++;
+    }
+  }
+
+  // Fetch sales user ID for linking claimed deal
+  const salesUser = await User.findOne({ email: "sales@vibhanu.com" });
+  const salesUserId = salesUser?._id?.toString();
+
+  // 2. Seed Leads Idempotently
+  let leadsCreated = 0;
+  let leadsUpdated = 0;
+  const demoLeads = buildDemoLeads(demoAudioFile, salesUserId);
+
+  for (const leadData of demoLeads) {
+    const existing = await Lead.findOne({ leadCode: leadData.leadCode });
+    if (!existing) {
+      const lead = new Lead(leadData);
+      await lead.save();
+      leadsCreated++;
+    } else {
+      existing.set(leadData);
+      if (!(leadData as any).vigilanceDetails) existing.set("vigilanceDetails", undefined);
+      if (!(leadData as any).supportDetails) existing.set("supportDetails", undefined);
+      if (!(leadData as any).salesDetails) existing.set("salesDetails", undefined);
+      if (!(leadData as any).communicationDetails) existing.set("communicationDetails", undefined);
+      await existing.save();
+      leadsUpdated++;
+    }
+  }
+
+  return {
+    usersCreated,
+    usersUpdated,
+    leadsCreated,
+    leadsUpdated,
+  };
+}
+
+export async function seedDatabaseIfEmpty() {
+  const count = await User.countDocuments();
+  if (count === 0) {
+    logger.info("Database has no users. Running initial seed...");
+    await seedDatabase();
+  }
+}
+
+// Direct CLI invocation
+if (require.main === module) {
+  (async () => {
+    try {
+      await connectDatabase();
+      const result = await seedDatabase();
+
+      const dbName = mongoose.connection.name || "vibhanu_crm";
+
+      // Concise summary conforming to Section 13 specification
+      console.log("\nMongoDB connected successfully\n");
+      console.log("Demo seed completed\n");
+      console.log("Users:");
+      console.log(`Created: ${result.usersCreated}`);
+      console.log(`Updated: ${result.usersUpdated}\n`);
+      console.log("Leads:");
+      console.log(`Created: ${result.leadsCreated}`);
+      console.log(`Updated: ${result.leadsUpdated}\n`);
+      console.log("Database:");
+      console.log(dbName + "\n");
+      console.log("Connection:");
+      console.log("MongoDB Atlas\n");
+
+      await disconnectDatabase();
+      process.exit(0);
+    } catch (err: any) {
+      logger.error({ err: err.message }, "Seed script failed");
+      process.exit(1);
+    }
+  })();
+}
