@@ -9,6 +9,9 @@ import { generalLimiter } from "./middleware/rateLimit.middleware";
 import { errorMiddleware, notFoundHandler } from "./middleware/error.middleware";
 import apiRouter from "./routes";
 
+import { connectDatabase } from "./config/database";
+import { logger } from "./config/logger";
+
 export function createApp(): Express {
   const app = express();
 
@@ -27,7 +30,7 @@ export function createApp(): Express {
       origin: (origin, callback) => {
         // Allow requests with no origin (like mobile apps, curl, server-to-server)
         if (!origin) return callback(null, true);
-        if (allowedOrigins.indexOf(origin) !== -1 || env.NODE_ENV === "development") {
+        if (allowedOrigins.indexOf(origin) !== -1 || env.NODE_ENV === "development" || allowedOrigins.includes("*")) {
           return callback(null, true);
         }
         return callback(new Error(`CORS policy does not allow access from origin: ${origin}`));
@@ -48,13 +51,48 @@ export function createApp(): Express {
   app.use(requestIdMiddleware);
   app.use(loggingMiddleware);
 
-  // 5. Rate Limiting
+  // 5. Standalone Root & Health endpoints (zero DB dependency, serverless-safe)
+  app.get("/", (_req, res) => {
+    return res.status(200).json({
+      success: true,
+      message: "Vibh-Anu CRM API is running",
+    });
+  });
+
+  app.get("/api/health", (_req, res) => {
+    return res.status(200).json({
+      success: true,
+      message: "Vibh-Anu CRM API is running",
+    });
+  });
+
+  // Favicon handler: return 204 No Content so browser requests never crash
+  app.get("/favicon.ico", (_req, res) => {
+    return res.status(204).end();
+  });
+
+  // 6. Rate Limiting
   app.use("/api", generalLimiter);
 
-  // 6. Mount API Routes
+  // 7. Serverless Database Auto-Connect for API routes
+  app.use("/api", async (req, _res, next) => {
+    // Health checks and favicon skip DB connection
+    if (req.path === "/health" || req.path === "/favicon.ico") {
+      return next();
+    }
+    try {
+      await connectDatabase();
+      next();
+    } catch (err) {
+      logger.error({ err }, "Database connection error in request middleware");
+      next(err);
+    }
+  });
+
+  // 8. Mount API Routes
   app.use("/api", apiRouter);
 
-  // 7. Not Found & Error Handling
+  // 9. Not Found & Error Handling
   app.use(notFoundHandler);
   app.use(errorMiddleware);
 
@@ -62,3 +100,4 @@ export function createApp(): Express {
 }
 
 export const app = createApp();
+export default app;

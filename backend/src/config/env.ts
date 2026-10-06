@@ -11,7 +11,14 @@ const envSchema = z.object({
     .string()
     .default("5000")
     .transform((val) => parseInt(val, 10)),
-  MONGO_URI: z.string().min(1, "MONGO_URI is required"),
+  MONGO_URI: z
+    .string()
+    .default("")
+    .transform((val) => val || process.env.MONGODB_URI || process.env.MONGO_URI || ""),
+  MONGODB_URI: z
+    .string()
+    .default("")
+    .transform((val) => val || process.env.MONGODB_URI || process.env.MONGO_URI || ""),
   JWT_SECRET: z.string().min(16, "JWT_SECRET must be at least 16 characters").default("vibhanu_crm_super_secure_jwt_secret_key_2026_dev_prod"),
   JWT_EXPIRES_IN: z.string().default("7d"),
   CLIENT_URL: z.string().default("http://localhost:3000"),

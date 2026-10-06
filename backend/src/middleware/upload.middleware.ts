@@ -6,11 +6,26 @@ import { Request } from "express";
 import { env } from "../config/env";
 import { logger } from "../config/logger";
 
-// Ensure upload directory exists
-const uploadDir = path.resolve(process.cwd(), env.UPLOAD_DIR);
-if (!fs.existsSync(uploadDir)) {
-  fs.mkdirSync(uploadDir, { recursive: true });
+import os from "os";
+
+// Determine safe upload directory (falls back to os.tmpdir() on Vercel / serverless)
+function getSafeUploadDir(): string {
+  if (process.env.VERCEL) {
+    return os.tmpdir();
+  }
+  const dir = path.resolve(process.cwd(), env.UPLOAD_DIR);
+  try {
+    if (!fs.existsSync(dir)) {
+      fs.mkdirSync(dir, { recursive: true });
+    }
+    return dir;
+  } catch (err) {
+    logger.warn({ err }, "Could not create configured upload dir, falling back to os.tmpdir()");
+    return os.tmpdir();
+  }
 }
+
+const uploadDir = getSafeUploadDir();
 
 const ALLOWED_MIME_TYPES = new Set([
   "audio/mpeg",

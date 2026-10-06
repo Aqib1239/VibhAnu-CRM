@@ -21,9 +21,18 @@ export class LocalStorageService implements IStorageProvider {
   private baseDir: string;
 
   constructor() {
-    this.baseDir = path.resolve(process.cwd(), env.UPLOAD_DIR);
-    if (!fs.existsSync(this.baseDir)) {
-      fs.mkdirSync(this.baseDir, { recursive: true });
+    if (process.env.VERCEL) {
+      this.baseDir = require("os").tmpdir();
+    } else {
+      this.baseDir = path.resolve(process.cwd(), env.UPLOAD_DIR);
+      try {
+        if (!fs.existsSync(this.baseDir)) {
+          fs.mkdirSync(this.baseDir, { recursive: true });
+        }
+      } catch (err) {
+        logger.warn({ err }, "Could not create configured baseDir, falling back to os.tmpdir()");
+        this.baseDir = require("os").tmpdir();
+      }
     }
   }
 

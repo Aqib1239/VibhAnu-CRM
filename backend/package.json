@@ -2,11 +2,11 @@
   "name": "vibhanu-crm-backend",
   "version": "1.0.0",
   "description": "Production-ready backend API for Vibh-Anu CRM",
-  "main": "dist/server.js",
+  "main": "dist/src/server.js",
   "scripts": {
     "dev": "tsx watch src/server.ts",
     "build": "tsc",
-    "start": "node dist/server.js",
+    "start": "node dist/src/server.js",
     "seed": "tsx src/scripts/seed.ts",
     "test": "jest --runInBand --detectOpenHandles --forceExit"
   },
