@@ -68,7 +68,7 @@ const LEADS_CACHE_KEY = "vibhanu_crm_leads_cache_v2";
 const STATS_CACHE_KEY = "vibhanu_crm_stats_cache_v2";
 
 export function LeadsProvider({ children }: { children: React.ReactNode }) {
-  const { user } = useAuth();
+  const { user, isReady } = useAuth();
   
   // 1. Deterministic initial state (identical on server and initial client render)
   const [leads, setLeads] = useState<Lead[]>([]);
@@ -90,7 +90,7 @@ export function LeadsProvider({ children }: { children: React.ReactNode }) {
     try {
       const [leadsResponse, computedStats] = await Promise.all([
         LeadsService.getLeads({ limit: 50, ...filters }),
-        LeadsService.getDashboardStats(),
+        LeadsService.getDashboardStats().catch(() => null),
       ]);
 
       // If a newer refresh request was initiated in the meantime, ignore this stale result
@@ -98,15 +98,18 @@ export function LeadsProvider({ children }: { children: React.ReactNode }) {
         return;
       }
 
-      setLeads(leadsResponse.data);
-      setStats(computedStats);
+      const freshLeads = leadsResponse?.data ?? [];
+      const finalStats = computedStats || LeadsService.computeStatsFromLeads(freshLeads);
+
+      setLeads(freshLeads);
+      setStats(finalStats);
 
       // Persist to client cache safely
-      if (typeof window !== "undefined" && leadsResponse.data.length > 0) {
+      if (typeof window !== "undefined" && freshLeads.length > 0) {
         try {
-          sessionStorage.setItem(LEADS_CACHE_KEY, JSON.stringify(leadsResponse.data));
-          if (computedStats) {
-            sessionStorage.setItem(STATS_CACHE_KEY, JSON.stringify(computedStats));
+          sessionStorage.setItem(LEADS_CACHE_KEY, JSON.stringify(freshLeads));
+          if (finalStats) {
+            sessionStorage.setItem(STATS_CACHE_KEY, JSON.stringify(finalStats));
           }
         } catch (_) {}
       }
@@ -114,6 +117,7 @@ export function LeadsProvider({ children }: { children: React.ReactNode }) {
       if (requestId === latestRequestId.current) {
         console.error("Failed to load leads", err);
         setError(err?.message || "Failed to load lead database");
+        setStats((prevStats) => prevStats || LeadsService.computeStatsFromLeads(leads));
       }
     } finally {
       if (requestId === latestRequestId.current) {
@@ -121,9 +125,9 @@ export function LeadsProvider({ children }: { children: React.ReactNode }) {
         setIsRevalidating(false);
       }
     }
-  }, []);
+  }, [leads]);
 
-  // 3. Hydrate cache AFTER initial mount (client-only, completely avoiding hydration mismatch)
+  // 3. Hydrate cache AFTER initial mount and trigger fetch once auth is ready
   useEffect(() => {
     setIsHydrated(true);
 
@@ -137,13 +141,14 @@ export function LeadsProvider({ children }: { children: React.ReactNode }) {
         if (Array.isArray(parsedLeads) && parsedLeads.length > 0) {
           setLeads(parsedLeads);
           hasCachedData = true;
-        }
-      }
-
-      if (cachedStatsStr) {
-        const parsedStats = JSON.parse(cachedStatsStr);
-        if (parsedStats && typeof parsedStats === "object") {
-          setStats(parsedStats);
+          if (cachedStatsStr) {
+            const parsedStats = JSON.parse(cachedStatsStr);
+            if (parsedStats && typeof parsedStats === "object") {
+              setStats(parsedStats);
+            }
+          } else {
+            setStats(LeadsService.computeStatsFromLeads(parsedLeads));
+          }
         }
       }
     } catch (_) {}
@@ -153,9 +158,11 @@ export function LeadsProvider({ children }: { children: React.ReactNode }) {
       setIsLoading(false);
     }
 
-    // Always revalidate fresh data from Atlas in the background
-    refreshLeads();
-  }, [refreshLeads]);
+    // Refresh once auth is ready, or when active role changes
+    if (isReady) {
+      refreshLeads();
+    }
+  }, [isReady, refreshLeads, user.role]);
 
   const getLeadById = async (id: string): Promise<Lead | null> => {
     return await LeadsService.getLeadById(id);

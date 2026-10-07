@@ -15,6 +15,9 @@ export async function requireAuth(req: Request, res: Response, next: NextFunctio
     } else if (req.cookies && (req.cookies.token || req.cookies.vibhanu_auth_token)) {
       // 2. Check HttpOnly cookie
       token = req.cookies.token || req.cookies.vibhanu_auth_token;
+    } else if (typeof req.query.token === "string" && req.query.token) {
+      // 3. Check query param token (required for HTML5 media elements like <audio>)
+      token = req.query.token;
     }
 
     if (!token) {

@@ -2,6 +2,7 @@
  * API Service Client Abstraction
  *
  * Provides a unified HTTP client interface connected to the REST backend.
+ * Includes automatic 401 session recovery interceptor.
  */
 
 export interface ApiResponse<T> {
@@ -22,9 +23,15 @@ export interface PaginatedResponse<T> {
 
 class ApiClient {
   private baseUrl: string;
+  private onAuthError?: () => Promise<string | null>;
 
   constructor() {
     this.baseUrl = process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000/api";
+  }
+
+  /** Register auth refresher callback to seamlessly recover from missing/expired session */
+  setOnAuthError(fn: () => Promise<string | null>) {
+    this.onAuthError = fn;
   }
 
   // Simulated latency helper if needed
@@ -67,11 +74,47 @@ class ApiClient {
     throw error;
   }
 
+  private async request<T>(
+    endpoint: string,
+    init: RequestInit,
+    isRetry = false
+  ): Promise<ApiResponse<T>> {
+    const isFullUrl = endpoint.startsWith("http://") || endpoint.startsWith("https://");
+    const url = isFullUrl
+      ? endpoint
+      : `${this.baseUrl}${endpoint.startsWith("/") ? endpoint : `/${endpoint}`}`;
+
+    const res = await fetch(url, init);
+    const json = await res.json().catch(() => ({}));
+
+    if (!res.ok) {
+      if (
+        res.status === 401 &&
+        !isRetry &&
+        !endpoint.includes("/auth/login") &&
+        this.onAuthError
+      ) {
+        // Attempt one-time re-authentication / session recovery
+        try {
+          const newToken = await this.onAuthError();
+          if (newToken) {
+            const currentHeaders = new Headers(init.headers);
+            currentHeaders.set("Authorization", `Bearer ${newToken}`);
+            return await this.request<T>(endpoint, { ...init, headers: currentHeaders }, true);
+          }
+        } catch (_) {}
+      }
+      this.handleResponseError(res.status, json);
+    }
+
+    return json;
+  }
+
   async get<T>(
     endpoint: string,
     params?: Record<string, string | number | boolean | undefined>
   ): Promise<ApiResponse<T>> {
-    let url = `${this.baseUrl}${endpoint.startsWith("/") ? endpoint : `/${endpoint}`}`;
+    let fullEndpoint = endpoint;
     if (params) {
       const searchParams = new URLSearchParams();
       Object.entries(params).forEach(([key, value]) => {
@@ -81,106 +124,58 @@ class ApiClient {
       });
       const qs = searchParams.toString();
       if (qs) {
-        url += `${url.includes("?") ? "&" : "?"}${qs}`;
+        fullEndpoint += `${fullEndpoint.includes("?") ? "&" : "?"}${qs}`;
       }
     }
-
-    const res = await fetch(url, {
+    return this.request<T>(fullEndpoint, {
       method: "GET",
       headers: this.getHeaders(),
       credentials: "include",
     });
-
-    const json = await res.json().catch(() => ({}));
-    if (!res.ok) {
-      this.handleResponseError(res.status, json);
-    }
-
-    return json;
   }
 
   async post<T>(endpoint: string, data?: unknown): Promise<ApiResponse<T>> {
-    const url = `${this.baseUrl}${endpoint.startsWith("/") ? endpoint : `/${endpoint}`}`;
-    const res = await fetch(url, {
+    return this.request<T>(endpoint, {
       method: "POST",
       headers: this.getHeaders(),
       credentials: "include",
       body: data ? JSON.stringify(data) : undefined,
     });
-
-    const json = await res.json().catch(() => ({}));
-    if (!res.ok) {
-      this.handleResponseError(res.status, json);
-    }
-
-    return json;
   }
 
   async patch<T>(endpoint: string, data?: unknown): Promise<ApiResponse<T>> {
-    const url = `${this.baseUrl}${endpoint.startsWith("/") ? endpoint : `/${endpoint}`}`;
-    const res = await fetch(url, {
+    return this.request<T>(endpoint, {
       method: "PATCH",
       headers: this.getHeaders(),
       credentials: "include",
       body: data ? JSON.stringify(data) : undefined,
     });
-
-    const json = await res.json().catch(() => ({}));
-    if (!res.ok) {
-      this.handleResponseError(res.status, json);
-    }
-
-    return json;
   }
 
   async upload<T>(endpoint: string, formData: FormData): Promise<ApiResponse<T>> {
-    const url = `${this.baseUrl}${endpoint.startsWith("/") ? endpoint : `/${endpoint}`}`;
-    const res = await fetch(url, {
+    return this.request<T>(endpoint, {
       method: "POST",
       headers: this.getHeaders(true),
       credentials: "include",
       body: formData,
     });
-
-    const json = await res.json().catch(() => ({}));
-    if (!res.ok) {
-      this.handleResponseError(res.status, json);
-    }
-
-    return json;
   }
 
   async put<T>(endpoint: string, data?: unknown): Promise<ApiResponse<T>> {
-    const url = `${this.baseUrl}${endpoint.startsWith("/") ? endpoint : `/${endpoint}`}`;
-    const res = await fetch(url, {
+    return this.request<T>(endpoint, {
       method: "PUT",
       headers: this.getHeaders(),
       credentials: "include",
       body: data ? JSON.stringify(data) : undefined,
     });
-
-    const json = await res.json().catch(() => ({}));
-    if (!res.ok) {
-      this.handleResponseError(res.status, json);
-    }
-
-    return json;
   }
 
   async delete<T>(endpoint: string): Promise<ApiResponse<T>> {
-    const url = `${this.baseUrl}${endpoint.startsWith("/") ? endpoint : `/${endpoint}`}`;
-    const res = await fetch(url, {
+    return this.request<T>(endpoint, {
       method: "DELETE",
       headers: this.getHeaders(),
       credentials: "include",
     });
-
-    const json = await res.json().catch(() => ({}));
-    if (!res.ok) {
-      this.handleResponseError(res.status, json);
-    }
-
-    return json;
   }
 }
 

@@ -40,6 +40,8 @@ export interface AudioPlayerProps {
   /** Pass the uploaded File/Blob directly */
   file?: File | Blob;
   className?: string;
+  /** When true, allows fallback to synthetic demo audio if file is missing (default false for real leads) */
+  allowDemoFallback?: boolean;
 }
 
 /* -------------------------------------------------------------------------- */
@@ -164,6 +166,7 @@ export function AudioPlayer({
   mimeType,
   file,
   className,
+  allowDemoFallback = false,
 }: AudioPlayerProps) {
   const audioRef = useRef<HTMLAudioElement | null>(null);
   const rafRef = useRef<number | null>(null);
@@ -223,72 +226,68 @@ export function AudioPlayer({
       };
     }
 
-    // 2. No source provided -> use fallback
+    // 2. No source provided
     if (!src) {
-      const fallbackUrl = DEFAULT_FALLBACK_AUDIO || createSyntheticAudioBlobUrl(12);
-      createdUrl = fallbackUrl.startsWith("blob:") ? fallbackUrl : null;
-      setResolvedSrc(fallbackUrl);
-      setIsUsingFallback(true);
-      isFallbackActiveRef.current = true;
+      if (allowDemoFallback) {
+        const fallbackUrl = DEFAULT_FALLBACK_AUDIO || createSyntheticAudioBlobUrl(12);
+        createdUrl = fallbackUrl.startsWith("blob:") ? fallbackUrl : null;
+        setResolvedSrc(fallbackUrl);
+        setIsUsingFallback(true);
+        isFallbackActiveRef.current = true;
+      } else {
+        setHasError(true);
+        setErrorMessage("Audio recording is not attached to this lead.");
+      }
       return () => {
         cancelled = true;
         if (createdUrl) URL.revokeObjectURL(createdUrl);
       };
     }
 
+    // 3. Resolve target URL with authentication query parameter if hitting backend
+    let targetSrc = src;
+    if (
+      targetSrc &&
+      targetSrc.includes("/leads/") &&
+      targetSrc.includes("/audio") &&
+      !targetSrc.includes("token=")
+    ) {
+      const token =
+        typeof window !== "undefined"
+          ? localStorage.getItem("vibhanu_crm_token") || localStorage.getItem("vibhanu_auth_token")
+          : null;
+      if (token) {
+        targetSrc = `${targetSrc}${targetSrc.includes("?") ? "&" : "?"}token=${encodeURIComponent(token)}`;
+      }
+    }
+
     const type = mimeType || inferMimeType(fileName);
 
-    // 3. Blob or relative / static URL
-    if (src.startsWith("blob:") && type) {
-      fetch(src)
+    // 4. Blob or relative / static URL
+    if (targetSrc.startsWith("blob:") && type) {
+      fetch(targetSrc)
         .then((res) => res.blob())
         .then((blob) => {
           if (cancelled) return;
           if (blob.type.startsWith("audio/")) {
-            setResolvedSrc(src);
+            setResolvedSrc(targetSrc);
           } else {
             createdUrl = URL.createObjectURL(new Blob([blob], { type }));
             setResolvedSrc(createdUrl);
           }
         })
         .catch(() => {
-          if (!cancelled) setResolvedSrc(src);
+          if (!cancelled) setResolvedSrc(targetSrc);
         });
     } else {
-      // Validate remote or local source with soft fallback on 404 / network error
-      setResolvedSrc(src);
-
-      // Verify if remote URL is reachable without blocking
-      if (src.startsWith("http://") || src.startsWith("https://")) {
-        fetch(src, { method: "HEAD" })
-          .then((res) => {
-            if (cancelled) return;
-            if (!res.ok && res.status === 404) {
-              // Automatically switch to working demo recording
-              const fallback = DEFAULT_FALLBACK_AUDIO || createSyntheticAudioBlobUrl(12);
-              createdUrl = fallback.startsWith("blob:") ? fallback : null;
-              setResolvedSrc(fallback);
-              setIsUsingFallback(true);
-              isFallbackActiveRef.current = true;
-            }
-          })
-          .catch(() => {
-            if (cancelled) return;
-            // Network or CORS error on remote URL: provide synthetic fallback
-            const fallback = DEFAULT_FALLBACK_AUDIO || createSyntheticAudioBlobUrl(12);
-            createdUrl = fallback.startsWith("blob:") ? fallback : null;
-            setResolvedSrc(fallback);
-            setIsUsingFallback(true);
-            isFallbackActiveRef.current = true;
-          });
-      }
+      setResolvedSrc(targetSrc);
     }
 
     return () => {
       cancelled = true;
       if (createdUrl) URL.revokeObjectURL(createdUrl);
     };
-  }, [src, file, fileName, mimeType, durationSeconds, isCompleted]);
+  }, [src, file, fileName, mimeType, durationSeconds, isCompleted, allowDemoFallback]);
 
   useEffect(() => {
     if (isCompleted) setIsEndedNaturally(true);
@@ -317,8 +316,8 @@ export function AudioPlayer({
     };
 
     const onError = () => {
-      // If primary source failed and fallback hasn't been activated yet, switch to fallback
-      if (!isFallbackActiveRef.current) {
+      // Only switch to synthetic fallback if explicitly permitted
+      if (allowDemoFallback && !isFallbackActiveRef.current) {
         isFallbackActiveRef.current = true;
         setIsUsingFallback(true);
         const synthUrl = createSyntheticAudioBlobUrl(12);
@@ -521,7 +520,6 @@ export function AudioPlayer({
         ref={audioRef}
         src={resolvedSrc}
         preload="metadata"
-        crossOrigin="anonymous"
       />
 
       {/* Header */}

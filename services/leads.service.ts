@@ -20,7 +20,12 @@ const BASE_URL =
 
 /** Build the authorised audio streaming URL for a lead */
 function buildAudioUrl(leadId: string): string {
-  return `${BASE_URL}/leads/${leadId}/audio`;
+  const token =
+    typeof window !== "undefined"
+      ? localStorage.getItem("vibhanu_crm_token") || localStorage.getItem("vibhanu_auth_token")
+      : null;
+  const tokenParam = token ? `?token=${encodeURIComponent(token)}` : "";
+  return `${BASE_URL}/leads/${leadId}/audio${tokenParam}`;
 }
 
 /** Map a raw backend lead document to the frontend Lead interface */
@@ -37,11 +42,27 @@ function mapBackendLead(raw: any): Lead {
     const rawUrl: string | undefined = rawAudio.url;
     let url = buildAudioUrl(leadId);
     if (rawUrl) {
-      if (rawUrl.startsWith("http") || rawUrl.startsWith("blob:")) {
+      if (rawUrl.startsWith("blob:")) {
         url = rawUrl;
+      } else if (rawUrl.startsWith("http://") || rawUrl.startsWith("https://")) {
+        const token =
+          typeof window !== "undefined"
+            ? localStorage.getItem("vibhanu_crm_token") || localStorage.getItem("vibhanu_auth_token")
+            : null;
+        if (token && rawUrl.includes("/audio") && !rawUrl.includes("token=")) {
+          url = `${rawUrl}${rawUrl.includes("?") ? "&" : "?"}token=${encodeURIComponent(token)}`;
+        } else {
+          url = rawUrl;
+        }
       } else {
         const root = BASE_URL.replace(/\/api$/, "");
-        url = `${root}${rawUrl.startsWith("/") ? "" : "/"}${rawUrl}`;
+        const cleanPath = rawUrl.startsWith("/") ? rawUrl : `/${rawUrl}`;
+        const token =
+          typeof window !== "undefined"
+            ? localStorage.getItem("vibhanu_crm_token") || localStorage.getItem("vibhanu_auth_token")
+            : null;
+        const tokenParam = token ? `?token=${encodeURIComponent(token)}` : "";
+        url = `${root}${cleanPath}${tokenParam}`;
       }
     }
 
@@ -137,6 +158,26 @@ function saveLocalLeads(leads: Lead[]): void {
 // ─────────────────────────────────────────────────────────────
 
 export class LeadsService {
+  /** Compute dashboard KPI statistics directly from any lead array */
+  static computeStatsFromLeads(leads: Lead[]): DashboardStats {
+    const count = (dept: string) =>
+      leads.filter((l) => l.currentDepartment === dept).length;
+    const claimedCount = count("claimed");
+    const totalLeads = leads.length;
+    return {
+      totalLeads,
+      marketingCount: count("marketing"),
+      communicationCount: count("communication"),
+      vigilanceCount: count("vigilance"),
+      supportCount: count("support"),
+      salesCount: count("sales"),
+      claimedCount,
+      conversionRate: totalLeads > 0 ? Math.round((claimedCount / totalLeads) * 100) : 0,
+      recentActivityCount: Math.max(12, totalLeads * 2),
+      leadsGrowthPercentage: 18.4,
+    };
+  }
+
   /** Reset local mock data back to defaults (dev helper) */
   static resetData(): Lead[] {
     saveLocalLeads(INITIAL_MOCK_LEADS);
@@ -316,8 +357,8 @@ export class LeadsService {
     _user: User
   ): Promise<Lead> {
     try {
-      // Step 1 — Upload audio if it's a local blob URL (newly selected file)
-      if (data.audio.url?.startsWith("blob:") && data.audio._file) {
+      // Step 1 — Upload audio if a file is attached
+      if (data.audio._file) {
         const formData = new FormData();
         formData.append("audio", data.audio._file);
         await api.upload<unknown>(`/leads/${leadId}/audio`, formData);

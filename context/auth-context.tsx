@@ -11,6 +11,7 @@ interface AuthContextType {
   user: User;
   role: Role;
   isLoading: boolean;
+  isReady: boolean;
   login: (email: string, password?: string) => Promise<void>;
   logout: () => Promise<void>;
   switchRole: (newRole: Role) => Promise<void>;
@@ -24,20 +25,28 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   // Deterministic initial render: default to ADMIN so server and client match identically
   const [user, setUser] = useState<User>(MOCK_USERS.ADMIN);
   const [isHydrated, setIsHydrated] = useState(false);
+  const [isAuthLoading, setIsAuthLoading] = useState(false);
   const router = useRouter();
 
   useEffect(() => {
-    try {
-      const currentUser = AuthService.getCurrentUser();
-      setUser(currentUser);
-    } catch (e) {
-      console.error("Auth init error", e);
-    } finally {
-      setIsHydrated(true);
-    }
+    let isMounted = true;
+    const initAuth = async () => {
+      try {
+        const currentUser = AuthService.getCurrentUser();
+        if (isMounted) setUser(currentUser);
+        // Ensure valid backend session exists before queries fire
+        await AuthService.ensureSession();
+      } catch (e) {
+        console.error("Auth init error", e);
+      } finally {
+        if (isMounted) setIsHydrated(true);
+      }
+    };
+    initAuth();
+    return () => {
+      isMounted = false;
+    };
   }, []);
-
-  const [isAuthLoading, setIsAuthLoading] = useState(false);
 
   const login = async (email: string, password?: string) => {
     setIsAuthLoading(true);
@@ -87,7 +96,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       value={{
         user,
         role: user.role,
-        isLoading: !isHydrated,
+        isLoading: !isHydrated || isAuthLoading,
+        isReady: isHydrated,
         login,
         logout,
         switchRole,

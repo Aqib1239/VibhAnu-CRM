@@ -13,6 +13,10 @@ function getSafeUploadDir(): string {
   if (process.env.VERCEL) {
     return os.tmpdir();
   }
+  const backendUploads = path.resolve(process.cwd(), "backend/uploads");
+  if (fs.existsSync(backendUploads)) {
+    return backendUploads;
+  }
   const dir = path.resolve(process.cwd(), env.UPLOAD_DIR);
   try {
     if (!fs.existsSync(dir)) {

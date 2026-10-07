@@ -43,20 +43,23 @@ export class LocalStorageService implements IStorageProvider {
   getFilePath(storagePath: string): string | null {
     if (!storagePath) return null;
 
-    // Sanitize and resolve full path
-    const resolvedPath = path.resolve(this.baseDir, path.basename(storagePath));
+    const baseName = path.basename(storagePath);
+    const candidateDirs = [
+      this.baseDir,
+      path.resolve(__dirname, "../../uploads"),
+      path.resolve(process.cwd(), "uploads"),
+      path.resolve(process.cwd(), "backend/uploads"),
+    ];
 
-    // Ensure resolved path starts with baseDir
-    if (!resolvedPath.startsWith(this.baseDir)) {
-      logger.warn({ storagePath, resolvedPath }, "Path traversal attempt detected");
-      return null;
+    for (const dir of candidateDirs) {
+      if (!dir) continue;
+      const candidate = path.resolve(dir, baseName);
+      if (candidate.startsWith(dir) && fs.existsSync(candidate)) {
+        return candidate;
+      }
     }
 
-    if (!fs.existsSync(resolvedPath)) {
-      return null;
-    }
-
-    return resolvedPath;
+    return null;
   }
 
   getFileStream(storagePath: string): fs.ReadStream | null {
