@@ -25,9 +25,15 @@ import {
 
 export default function LoginPage() {
   const router = useRouter();
-  const { login } = useAuth();
+  const { login, user, isReady } = useAuth();
   const [showPassword, setShowPassword] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
+
+  React.useEffect(() => {
+    if (isReady && user) {
+      router.replace("/");
+    }
+  }, [isReady, user, router]);
 
   const {
     register,

@@ -244,7 +244,8 @@ export function Header({ onToggleMobileMenu }: HeaderProps) {
           </div>
 
           {/* User Profile Menu with Anchor Motion conforming to Section 7 */}
-          <div className="relative">
+          {user && (
+            <div className="relative">
             <button
               type="button"
               onClick={() => setShowUserDropdown(!showUserDropdown)}
@@ -322,7 +323,8 @@ export function Header({ onToggleMobileMenu }: HeaderProps) {
                 </motion.div>
               )}
             </AnimatePresence>
-          </div>
+            </div>
+          )}
         </div>
       </header>
 

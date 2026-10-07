@@ -150,6 +150,45 @@ const SKIP_SECONDS = 10;
 const BAR_COUNT = 56;
 const DEFAULT_FALLBACK_AUDIO = "/audio/sample-call.wav";
 
+/**
+ * Resolves an audio URL to a fully-qualified authenticated endpoint if targeting backend.
+ * Never appends duplicate tokens and expands relative endpoints to the backend API origin.
+ */
+function resolveAudioUrl(src: string): string {
+  if (!src || src.startsWith("blob:") || src.startsWith("data:")) {
+    return src;
+  }
+
+  const token =
+    typeof window !== "undefined"
+      ? localStorage.getItem("vibhanu_crm_token") || localStorage.getItem("vibhanu_auth_token")
+      : null;
+
+  let resolved = src;
+
+  // 1. If relative URL, expand to backend API server
+  if (resolved.startsWith("/")) {
+    const apiBase = (process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000/api").replace(/\/$/, "");
+    const backendOrigin = apiBase.replace(/\/api$/, "");
+    if (resolved.startsWith("/api/")) {
+      resolved = `${backendOrigin}${resolved}`;
+    } else if (resolved.startsWith("/leads/")) {
+      resolved = `${apiBase}${resolved}`;
+    }
+  }
+
+  // 2. If it is an authenticated /audio endpoint and token is missing, append token once
+  const isAudioEndpoint = resolved.includes("/leads/") && resolved.includes("/audio");
+  if (isAudioEndpoint && token) {
+    const hasToken = /[?&]token=/.test(resolved);
+    if (!hasToken) {
+      resolved = `${resolved}${resolved.includes("?") ? "&" : "?"}token=${encodeURIComponent(token)}`;
+    }
+  }
+
+  return resolved;
+}
+
 /* -------------------------------------------------------------------------- */
 /*  Main AudioPlayer Component                                                */
 /* -------------------------------------------------------------------------- */
@@ -244,44 +283,9 @@ export function AudioPlayer({
       };
     }
 
-    // 3. Resolve target URL with authentication query parameter if hitting backend
-    let targetSrc = src;
-    if (
-      targetSrc &&
-      targetSrc.includes("/leads/") &&
-      targetSrc.includes("/audio") &&
-      !targetSrc.includes("token=")
-    ) {
-      const token =
-        typeof window !== "undefined"
-          ? localStorage.getItem("vibhanu_crm_token") || localStorage.getItem("vibhanu_auth_token")
-          : null;
-      if (token) {
-        targetSrc = `${targetSrc}${targetSrc.includes("?") ? "&" : "?"}token=${encodeURIComponent(token)}`;
-      }
-    }
-
-    const type = mimeType || inferMimeType(fileName);
-
-    // 4. Blob or relative / static URL
-    if (targetSrc.startsWith("blob:") && type) {
-      fetch(targetSrc)
-        .then((res) => res.blob())
-        .then((blob) => {
-          if (cancelled) return;
-          if (blob.type.startsWith("audio/")) {
-            setResolvedSrc(targetSrc);
-          } else {
-            createdUrl = URL.createObjectURL(new Blob([blob], { type }));
-            setResolvedSrc(createdUrl);
-          }
-        })
-        .catch(() => {
-          if (!cancelled) setResolvedSrc(targetSrc);
-        });
-    } else {
-      setResolvedSrc(targetSrc);
-    }
+    // 3. Resolve target URL directly with single token
+    const targetSrc = resolveAudioUrl(src);
+    setResolvedSrc(targetSrc);
 
     return () => {
       cancelled = true;
@@ -329,9 +333,7 @@ export function AudioPlayer({
 
       const code = audio.error?.code;
       setErrorMessage(
-        code === 4
-          ? "This audio format is not supported by your browser."
-          : code === 2
+        code === 2
           ? "Network error occurred while loading audio."
           : "Audio file is temporarily unavailable."
       );
@@ -372,7 +374,7 @@ export function AudioPlayer({
       audio.removeEventListener("timeupdate", onTimeUpdate);
       audio.removeEventListener("ended", onEnded);
     };
-  }, [duration]);
+  }, [resolvedSrc, allowDemoFallback, duration]);
 
   /* --------------- Smooth progress ticker during playback --------------- */
 
@@ -442,6 +444,15 @@ export function AudioPlayer({
       setIsPlaying(false);
     }
   }, [hasError]);
+
+  const handleRetry = useCallback(() => {
+    setHasError(false);
+    setErrorMessage(null);
+    const audio = audioRef.current;
+    if (audio) {
+      audio.load();
+    }
+  }, []);
 
   const skipBy = (delta: number) => seekTo((audioRef.current?.currentTime ?? currentTime) + delta);
 
@@ -588,18 +599,27 @@ export function AudioPlayer({
 
       {/* Error explanation if any */}
       {hasError && errorMessage && (
-        <p
+        <div
           role="alert"
-          className="mt-3 flex items-start gap-2 rounded-lg border border-destructive/20 bg-destructive/5 px-3 py-2 text-[12.5px] text-destructive"
+          className="mt-3 flex items-start justify-between gap-2 rounded-lg border border-destructive/20 bg-destructive/5 px-3 py-2 text-[12.5px] text-destructive"
         >
-          <AlertCircle className="mt-0.5 h-3.5 w-3.5 shrink-0" />
-          <span className="min-w-0">
-            {errorMessage}
-            <span className="mt-1 block truncate font-mono text-[11px] opacity-70">
-              Source: {file ? `uploaded file (${file.type || "no type"})` : src || "none"}
-            </span>
-          </span>
-        </p>
+          <div className="flex items-start gap-2 min-w-0">
+            <AlertCircle className="mt-0.5 h-3.5 w-3.5 shrink-0" />
+            <div className="min-w-0">
+              <span className="font-medium">{errorMessage}</span>
+              <span className="mt-0.5 block truncate font-mono text-[11px] opacity-70">
+                File: {fileName || "audio recording"}
+              </span>
+            </div>
+          </div>
+          <button
+            type="button"
+            onClick={handleRetry}
+            className="shrink-0 text-[11px] font-semibold underline hover:no-underline text-destructive hover:opacity-80 px-1 py-0.5"
+          >
+            Retry
+          </button>
+        </div>
       )}
 
       {/* Waveform scrubber */}

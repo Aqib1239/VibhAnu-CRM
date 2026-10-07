@@ -7,6 +7,7 @@ import { useLeads } from "@/context/leads-context";
 import { PageHeader } from "@/components/layout/PageHeader";
 import { RoleBadge } from "@/components/ui/role-badge";
 import { Button } from "@/components/ui/button";
+import { LeadsService } from "@/services/leads.service";
 import {
   DashboardSkeleton,
   BentoCard,
@@ -22,7 +23,9 @@ export function VigilanceDashboard() {
   const { user } = useAuth();
   const { leads, stats, isLoading } = useLeads();
 
-  if (isLoading || !stats) return <DashboardSkeleton />;
+  const activeStats = stats || (leads.length > 0 ? LeadsService.computeStatsFromLeads(leads) : null);
+
+  if ((isLoading && leads.length === 0) || !activeStats) return <DashboardSkeleton />;
 
   const vigilanceLeads = leads.filter((l) => l.currentDepartment === "vigilance");
   const withAudio = vigilanceLeads.filter((l) => !!l.vigilanceDetails?.audio);

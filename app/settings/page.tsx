@@ -113,11 +113,11 @@ export default function SettingsPage() {
             <div className="space-y-4 text-[13px]">
               <div className="flex items-center justify-between p-3.5 rounded-xl bg-muted/40 border border-border/80">
                 <div>
-                  <h4 className="font-semibold text-foreground text-[15px]">{user.name}</h4>
-                  <p className="text-muted-foreground text-[13px]">{user.email}</p>
-                  <p className="text-[12px] text-muted-foreground font-mono mt-0.5">{user.department}</p>
+                  <h4 className="font-semibold text-foreground text-[15px]">{user?.name}</h4>
+                  <p className="text-muted-foreground text-[13px]">{user?.email}</p>
+                  <p className="text-[12px] text-muted-foreground font-mono mt-0.5">{user?.department}</p>
                 </div>
-                <RoleBadge role={user.role} size="md" />
+                <RoleBadge role={user?.role ?? role} size="md" />
               </div>
 
               <div>

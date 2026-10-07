@@ -8,8 +8,9 @@ import { MOCK_USERS } from "@/constants/roles";
 import { toast } from "sonner";
 
 interface AuthContextType {
-  user: User;
+  user: User | null;
   role: Role;
+  isAuthenticated: boolean;
   isLoading: boolean;
   isReady: boolean;
   login: (email: string, password?: string) => Promise<void>;
@@ -22,9 +23,10 @@ interface AuthContextType {
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
 export function AuthProvider({ children }: { children: React.ReactNode }) {
-  // Deterministic initial render: default to ADMIN so server and client match identically
-  const [user, setUser] = useState<User>(MOCK_USERS.ADMIN);
+  // Deterministic initial render: null unauthenticated state until session validation completes
+  const [user, setUser] = useState<User | null>(null);
   const [isHydrated, setIsHydrated] = useState(false);
+  const [isReady, setIsReady] = useState(false);
   const [isAuthLoading, setIsAuthLoading] = useState(false);
   const router = useRouter();
 
@@ -32,14 +34,32 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     let isMounted = true;
     const initAuth = async () => {
       try {
-        const currentUser = AuthService.getCurrentUser();
-        if (isMounted) setUser(currentUser);
-        // Ensure valid backend session exists before queries fire
-        await AuthService.ensureSession();
+        const storedUser = AuthService.getCurrentUser();
+        const storedToken = AuthService.getToken();
+        if (storedUser && storedToken) {
+          // Validate existing session token against expiration & signature
+          const validToken = await AuthService.ensureSession();
+          if (validToken && isMounted) {
+            setUser(storedUser);
+          } else if (isMounted) {
+            AuthService.clearAuth();
+            setUser(null);
+          }
+        } else if (isMounted) {
+          AuthService.clearAuth();
+          setUser(null);
+        }
       } catch (e) {
         console.error("Auth init error", e);
+        if (isMounted) {
+          AuthService.clearAuth();
+          setUser(null);
+        }
       } finally {
-        if (isMounted) setIsHydrated(true);
+        if (isMounted) {
+          setIsHydrated(true);
+          setIsReady(true);
+        }
       }
     };
     initAuth();
@@ -70,7 +90,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     } catch (_) {
       // ignore backend errors on logout – clear locally regardless
     }
-    setUser(MOCK_USERS.ADMIN);
+    setUser(null);
     toast.info("Logged out", { description: "You have been signed out." });
     router.push("/login");
   };
@@ -84,10 +104,12 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   };
 
   const hasPermission = (permission: Permission): boolean => {
+    if (!user) return false;
     return AuthService.hasPermission(user.role, permission);
   };
 
   const canAccessDepartment = (department: string): boolean => {
+    if (!user) return false;
     return AuthService.canAccessDepartment(user.role, department);
   };
 
@@ -95,9 +117,10 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     <AuthContext.Provider
       value={{
         user,
-        role: user.role,
-        isLoading: !isHydrated || isAuthLoading,
-        isReady: isHydrated,
+        role: user ? user.role : ("ADMIN" as Role),
+        isAuthenticated: !!user && isReady,
+        isLoading: !isHydrated || !isReady || isAuthLoading,
+        isReady,
         login,
         logout,
         switchRole,

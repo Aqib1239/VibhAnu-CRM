@@ -184,7 +184,7 @@ export default function LeadsPage() {
       {/* Main CRM Data Table */}
       <Card>
         <CardContent className="p-0">
-          {isLoading ? (
+          {isLoading && leads.length === 0 ? (
             <TableSkeleton rows={6} cols={6} />
           ) : filteredLeads.length === 0 ? (
             <EmptyState

@@ -270,7 +270,7 @@ export default function SalesPage() {
                         <div>
                           <span className="text-muted-foreground block text-[11px]">Claimed By:</span>
                           <span className="font-semibold text-foreground text-[13px]">
-                            {selectedLead.salesDetails?.claimedBy || user.name}
+                            {selectedLead.salesDetails?.claimedBy || user?.name}
                           </span>
                         </div>
                         <div>

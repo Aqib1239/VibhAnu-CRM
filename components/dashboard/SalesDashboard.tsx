@@ -8,6 +8,7 @@ import { PageHeader } from "@/components/layout/PageHeader";
 import { RoleBadge } from "@/components/ui/role-badge";
 import { Button } from "@/components/ui/button";
 import { StatusBadge } from "@/components/ui/status-badge";
+import { LeadsService } from "@/services/leads.service";
 import {
   DashboardSkeleton,
   BentoCard,
@@ -33,7 +34,9 @@ export function SalesDashboard() {
   const { user } = useAuth();
   const { leads, stats, isLoading } = useLeads();
 
-  if (isLoading || !stats) return <DashboardSkeleton />;
+  const activeStats = stats || (leads.length > 0 ? LeadsService.computeStatsFromLeads(leads) : null);
+
+  if ((isLoading && leads.length === 0) || !activeStats) return <DashboardSkeleton />;
 
   const salesLeads = leads.filter((l) => l.currentDepartment === "sales");
   const claimedLeads = leads.filter((l) => l.currentDepartment === "claimed");
@@ -41,7 +44,8 @@ export function SalesDashboard() {
   const audioCompleted = salesLeads.filter((l) => l.salesDetails?.audioListenCompleted === true);
   const audioPending = salesLeads.filter((l) => !l.salesDetails?.audioListenCompleted);
 
-  const myClaimed = claimedLeads.filter((l) => l.salesDetails?.claimedBy?.includes(user.name));
+  const userName = user?.name || "";
+  const myClaimed = claimedLeads.filter((l) => (userName ? l.salesDetails?.claimedBy?.includes(userName) : false));
 
   const activityEvents = buildActivityEvents(
     leads.filter((l) => l.currentDepartment === "sales" || l.currentDepartment === "claimed"),

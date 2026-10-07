@@ -34,16 +34,16 @@ import {
 export default function LeadDetailPage() {
   const params = useParams();
   const router = useRouter();
-  const { getLeadById } = useLeads();
-  const [lead, setLead] = useState<Lead | null>(null);
-  const [loading, setLoading] = useState(true);
-
+  const { leads, getLeadById } = useLeads();
   const leadId = params?.id as string;
+  const existingLead = leads.find((l) => l.id === leadId) || null;
+  const [lead, setLead] = useState<Lead | null>(existingLead);
+  const [loading, setLoading] = useState(!existingLead);
 
   useEffect(() => {
     async function loadLead() {
       if (!leadId) return;
-      setLoading(true);
+      if (!lead) setLoading(true);
       const data = await getLeadById(leadId);
       setLead(data);
       setLoading(false);

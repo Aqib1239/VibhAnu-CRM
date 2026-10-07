@@ -17,6 +17,7 @@ import {
   BentoAlertBanner,
   buildActivityEvents,
 } from "@/components/dashboard/shared";
+import { LeadsService } from "@/services/leads.service";
 import {
   Users,
   Megaphone,
@@ -41,7 +42,9 @@ export function AdminDashboard() {
     else setGreeting("Good evening");
   }, []);
 
-  if (isLoading || !stats) return <DashboardSkeleton />;
+  const activeStats = stats || (leads.length > 0 ? LeadsService.computeStatsFromLeads(leads) : null);
+
+  if ((isLoading && leads.length === 0) || !activeStats) return <DashboardSkeleton />;
 
   const recentLeads = [...leads]
     .sort((a, b) => new Date(b.updatedAt).getTime() - new Date(a.updatedAt).getTime())
@@ -50,36 +53,36 @@ export function AdminDashboard() {
   const allEvents = buildActivityEvents(leads, 6);
 
   const pendingAttention = [
-    { label: "Vigilance", count: stats.vigilanceCount, href: "/vigilance" },
-    { label: "Support", count: stats.supportCount, href: "/support" },
-    { label: "Sales", count: stats.salesCount, href: "/sales" },
+    { label: "Vigilance", count: activeStats.vigilanceCount, href: "/vigilance" },
+    { label: "Support", count: activeStats.supportCount, href: "/support" },
+    { label: "Sales", count: activeStats.salesCount, href: "/sales" },
   ].filter((d) => d.count > 0);
 
   const adminKpis = [
     {
       label: "Total Leads",
-      value: stats.totalLeads,
-      trend: { value: `+${stats.leadsGrowthPercentage}%`, isPositive: true },
+      value: activeStats.totalLeads,
+      trend: { value: `+${activeStats.leadsGrowthPercentage}%`, isPositive: true },
       sublabel: "Active database",
       icon: <Users className="w-4 h-4 text-primary" />,
       highlight: true,
     },
     {
       label: "Inbound & Outreach",
-      value: stats.marketingCount + stats.communicationCount,
-      sublabel: `${stats.marketingCount} Mkt • ${stats.communicationCount} Comm`,
+      value: activeStats.marketingCount + activeStats.communicationCount,
+      sublabel: `${activeStats.marketingCount} Mkt • ${activeStats.communicationCount} Comm`,
       icon: <Megaphone className="w-4 h-4 text-blue-500" />,
     },
     {
       label: "Audit & Support",
-      value: stats.vigilanceCount + stats.supportCount,
-      sublabel: `${stats.vigilanceCount} Vig • ${stats.supportCount} Sup`,
+      value: activeStats.vigilanceCount + activeStats.supportCount,
+      sublabel: `${activeStats.vigilanceCount} Vig • ${activeStats.supportCount} Sup`,
       icon: <ShieldCheck className="w-4 h-4 text-amber-500" />,
     },
     {
       label: "Conversion Rate",
-      value: `${stats.conversionRate}%`,
-      sublabel: `${stats.claimedCount} deals closed`,
+      value: `${activeStats.conversionRate}%`,
+      sublabel: `${activeStats.claimedCount} deals closed`,
       icon: <TrendingUp className="w-4 h-4 text-emerald-500" />,
     },
   ];
@@ -88,7 +91,7 @@ export function AdminDashboard() {
     <div className="space-y-6 pb-12">
       {/* Page Header */}
       <PageHeader
-        title={`${greeting}, ${user.name.split(" ")[0]}`}
+        title={`${greeting}, ${user?.name ? user.name.split(" ")[0] : "Admin"}`}
         description="Global operational overview across lead intake, verification, allocation, and sales conversion."
         badge={<RoleBadge role="ADMIN" />}
       >
@@ -119,7 +122,7 @@ export function AdminDashboard() {
 
         {/* Right 4 Cols: Department Load Matrix */}
         <div className="lg:col-span-4">
-          <BentoWorkloadMatrix stats={stats} />
+          <BentoWorkloadMatrix stats={activeStats} />
         </div>
       </div>
 

@@ -42,27 +42,36 @@ function mapBackendLead(raw: any): Lead {
     const rawUrl: string | undefined = rawAudio.url;
     let url = buildAudioUrl(leadId);
     if (rawUrl) {
-      if (rawUrl.startsWith("blob:")) {
+      if (rawUrl.startsWith("blob:") || rawUrl.startsWith("data:")) {
         url = rawUrl;
       } else if (rawUrl.startsWith("http://") || rawUrl.startsWith("https://")) {
         const token =
           typeof window !== "undefined"
             ? localStorage.getItem("vibhanu_crm_token") || localStorage.getItem("vibhanu_auth_token")
             : null;
-        if (token && rawUrl.includes("/audio") && !rawUrl.includes("token=")) {
+        if (token && rawUrl.includes("/audio") && !/[?&]token=/.test(rawUrl)) {
           url = `${rawUrl}${rawUrl.includes("?") ? "&" : "?"}token=${encodeURIComponent(token)}`;
         } else {
           url = rawUrl;
         }
       } else {
-        const root = BASE_URL.replace(/\/api$/, "");
         const cleanPath = rawUrl.startsWith("/") ? rawUrl : `/${rawUrl}`;
+        let fullPath = cleanPath;
+        if (cleanPath.startsWith("/api/")) {
+          const root = BASE_URL.replace(/\/api$/, "");
+          fullPath = `${root}${cleanPath}`;
+        } else {
+          fullPath = `${BASE_URL}${cleanPath}`;
+        }
         const token =
           typeof window !== "undefined"
             ? localStorage.getItem("vibhanu_crm_token") || localStorage.getItem("vibhanu_auth_token")
             : null;
-        const tokenParam = token ? `?token=${encodeURIComponent(token)}` : "";
-        url = `${root}${cleanPath}${tokenParam}`;
+        if (token && fullPath.includes("/audio") && !/[?&]token=/.test(fullPath)) {
+          url = `${fullPath}${fullPath.includes("?") ? "&" : "?"}token=${encodeURIComponent(token)}`;
+        } else {
+          url = fullPath;
+        }
       }
     }
 
@@ -284,7 +293,7 @@ export class LeadsService {
       state?: string;
       initialRemarks?: string;
     },
-    _user: User
+    _user?: User | null
   ): Promise<Lead> {
     try {
       const res = await api.post<unknown>("/leads", {
@@ -321,7 +330,7 @@ export class LeadsService {
       time: string;
       remark: string;
     },
-    _user: User
+    _user?: User | null
   ): Promise<Lead> {
     try {
       const res = await api.post<unknown>(`/leads/${leadId}/meeting`, data);
@@ -354,7 +363,7 @@ export class LeadsService {
       remark: string;
       audio: AudioData;
     },
-    _user: User
+    _user?: User | null
   ): Promise<Lead> {
     try {
       // Step 1 — Upload audio if a file is attached
@@ -399,7 +408,7 @@ export class LeadsService {
       allocatedTo: string;
       allocationNotes?: string;
     },
-    _user: User
+    _user?: User | null
   ): Promise<Lead> {
     try {
       const res = await api.post<unknown>(`/leads/${leadId}/allocate`, data);
@@ -449,7 +458,7 @@ export class LeadsService {
       dealValue?: number;
       closingRemarks?: string;
     },
-    _user: User
+    _user?: User | null
   ): Promise<Lead> {
     try {
       const res = await api.post<unknown>(`/leads/${leadId}/claim`, data);
@@ -538,11 +547,13 @@ function fallbackGetDashboardStats(): DashboardStats {
 
 function fallbackCreateLead(
   data: { name: string; contactNumber: string; city?: string; state?: string; initialRemarks?: string },
-  user: User
+  user?: User | null
 ): Lead {
   const leads = loadLocalLeads();
   const now = new Date().toISOString();
   const leadCode = `VA-2026-${Math.floor(1000 + Math.random() * 9000)}`;
+  const userName = user?.name || "System";
+  const userRole = user?.role || "MARKETING";
   const newLead: Lead = {
     id: `lead-${Date.now()}`,
     leadCode,
@@ -555,13 +566,13 @@ function fallbackCreateLead(
     status: "in_progress",
     createdAt: now,
     updatedAt: now,
-    createdBy: `${user.name} (${user.role})`,
+    createdBy: `${userName} (${userRole})`,
     workflowHistory: [{
       id: `wf-${Date.now()}-1`,
       department: "marketing",
       action: "Lead Created",
-      userName: user.name,
-      userRole: user.role,
+      userName,
+      userRole,
       timestamp: now,
       description: "Lead created by Marketing. Dispatched to Communication team.",
     }],
@@ -574,20 +585,22 @@ function fallbackCreateLead(
 function fallbackScheduleMeeting(
   leadId: string,
   data: { name: string; postalAddress: string; city: string; state: string; pincode?: string; date: string; time: string; remark: string },
-  user: User
+  user?: User | null
 ): Lead {
   const leads = loadLocalLeads();
   const index = leads.findIndex((l) => l.id === leadId);
   if (index === -1) throw new Error("Lead not found");
   const now = new Date().toISOString();
+  const userName = user?.name || "System";
+  const userRole = user?.role || "COMMUNICATION";
   const updated: Lead = {
     ...leads[index],
     ...data,
     currentDepartment: "vigilance",
     status: "meeting_scheduled",
     updatedAt: now,
-    communicationDetails: { scheduledDate: data.date, scheduledTime: data.time, meetingNotes: data.remark, completedAt: now, completedBy: user.name },
-    workflowHistory: [...leads[index].workflowHistory, { id: `wf-${Date.now()}`, department: "communication", action: "Meeting Scheduled", userName: user.name, userRole: user.role, timestamp: now, description: `Meeting scheduled for ${data.date} at ${data.time}. Transferred to Vigilance.` }],
+    communicationDetails: { scheduledDate: data.date, scheduledTime: data.time, meetingNotes: data.remark, completedAt: now, completedBy: userName },
+    workflowHistory: [...leads[index].workflowHistory, { id: `wf-${Date.now()}`, department: "communication", action: "Meeting Scheduled", userName, userRole, timestamp: now, description: `Meeting scheduled for ${data.date} at ${data.time}. Transferred to Vigilance.` }],
   };
   leads[index] = updated;
   saveLocalLeads(leads);
@@ -597,21 +610,23 @@ function fallbackScheduleMeeting(
 function fallbackVerifyVigilance(
   leadId: string,
   data: { name: string; postalAddress: string; city: string; state: string; pincode?: string; date: string; time: string; remark: string; audio: AudioData },
-  user: User
+  user?: User | null
 ): Lead {
   const leads = loadLocalLeads();
   const index = leads.findIndex((l) => l.id === leadId);
   if (index === -1) throw new Error("Lead not found");
   const now = new Date().toISOString();
+  const userName = user?.name || "System";
+  const userRole = user?.role || "VIGILANCE";
   const updated: Lead = {
     ...leads[index],
     name: data.name, postalAddress: data.postalAddress, city: data.city, state: data.state, pincode: data.pincode, date: data.date, time: data.time, remark: data.remark,
     currentDepartment: "support",
     status: "verified",
     updatedAt: now,
-    vigilanceDetails: { audio: data.audio, verificationNotes: data.remark, completedAt: now, completedBy: user.name },
+    vigilanceDetails: { audio: data.audio, verificationNotes: data.remark, completedAt: now, completedBy: userName },
     supportDetails: { verification: { isDateVerified: false, isTimeVerified: false, isAddressVerified: false } },
-    workflowHistory: [...leads[index].workflowHistory, { id: `wf-${Date.now()}`, department: "vigilance", action: "Verified & Audio Uploaded", userName: user.name, userRole: user.role, timestamp: now, description: `Vigilance audit passed. Call recording (${data.audio.fileName}) attached. Moved to Support.` }],
+    workflowHistory: [...leads[index].workflowHistory, { id: `wf-${Date.now()}`, department: "vigilance", action: "Verified & Audio Uploaded", userName, userRole, timestamp: now, description: `Vigilance audit passed. Call recording (${data.audio.fileName}) attached. Moved to Support.` }],
   };
   leads[index] = updated;
   saveLocalLeads(leads);
@@ -621,20 +636,22 @@ function fallbackVerifyVigilance(
 function fallbackAllocateLead(
   leadId: string,
   data: { isDateVerified: boolean; isTimeVerified: boolean; isAddressVerified: boolean; allocatedTo: string; allocationNotes?: string },
-  user: User
+  user?: User | null
 ): Lead {
   const leads = loadLocalLeads();
   const index = leads.findIndex((l) => l.id === leadId);
   if (index === -1) throw new Error("Lead not found");
   const now = new Date().toISOString();
+  const userName = user?.name || "System";
+  const userRole = user?.role || "SUPPORT";
   const updated: Lead = {
     ...leads[index],
     currentDepartment: "sales",
     status: "allocated",
     updatedAt: now,
-    supportDetails: { verification: { isDateVerified: data.isDateVerified, isTimeVerified: data.isTimeVerified, isAddressVerified: data.isAddressVerified, verifiedBy: user.name, verifiedAt: now, notes: data.allocationNotes }, allocatedTo: data.allocatedTo, allocationNotes: data.allocationNotes, completedAt: now, completedBy: user.name },
+    supportDetails: { verification: { isDateVerified: data.isDateVerified, isTimeVerified: data.isTimeVerified, isAddressVerified: data.isAddressVerified, verifiedBy: userName, verifiedAt: now, notes: data.allocationNotes }, allocatedTo: data.allocatedTo, allocationNotes: data.allocationNotes, completedAt: now, completedBy: userName },
     salesDetails: { audioListenCompleted: false },
-    workflowHistory: [...leads[index].workflowHistory, { id: `wf-${Date.now()}`, department: "support", action: "Allocated to Sales", userName: user.name, userRole: user.role, timestamp: now, description: `3-point verification confirmed. Allocated to Sales Executive: ${data.allocatedTo}.` }],
+    workflowHistory: [...leads[index].workflowHistory, { id: `wf-${Date.now()}`, department: "support", action: "Allocated to Sales", userName, userRole, timestamp: now, description: `3-point verification confirmed. Allocated to Sales Executive: ${data.allocatedTo}.` }],
   };
   leads[index] = updated;
   saveLocalLeads(leads);
@@ -644,19 +661,21 @@ function fallbackAllocateLead(
 function fallbackClaimLead(
   leadId: string,
   data: { dealValue?: number; closingRemarks?: string },
-  user: User
+  user?: User | null
 ): Lead {
   const leads = loadLocalLeads();
   const index = leads.findIndex((l) => l.id === leadId);
   if (index === -1) throw new Error("Lead not found");
   const now = new Date().toISOString();
+  const userName = user?.name || "System";
+  const userRole = user?.role || "SALES";
   const updated: Lead = {
     ...leads[index],
     currentDepartment: "claimed",
     status: "claimed",
     updatedAt: now,
-    salesDetails: { audioListenCompleted: true, claimedBy: `${user.name} (${user.role})`, claimedAt: now, dealValue: data.dealValue || 350000, closingRemarks: data.closingRemarks || "Lead claimed after audio review." },
-    workflowHistory: [...leads[index].workflowHistory, { id: `wf-${Date.now()}`, department: "sales", action: "Audio Listened & Lead Claimed", userName: user.name, userRole: user.role, timestamp: now, description: `Audio review completed. Lead claimed by ${user.name}.` }],
+    salesDetails: { audioListenCompleted: true, claimedBy: `${userName} (${userRole})`, claimedAt: now, dealValue: data.dealValue || 350000, closingRemarks: data.closingRemarks || "Lead claimed after audio review." },
+    workflowHistory: [...leads[index].workflowHistory, { id: `wf-${Date.now()}`, department: "sales", action: "Audio Listened & Lead Claimed", userName, userRole, timestamp: now, description: `Audio review completed. Lead claimed by ${userName}.` }],
   };
   leads[index] = updated;
   saveLocalLeads(leads);

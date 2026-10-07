@@ -15,17 +15,21 @@ import {
   BentoActivityTimeline,
   buildActivityEvents,
 } from "@/components/dashboard/shared";
+import { LeadsService } from "@/services/leads.service";
 import { Megaphone, Plus, Send, Users, CheckCircle2, Clock, Sparkles } from "lucide-react";
 
 export function MarketingDashboard() {
   const { user } = useAuth();
   const { leads, stats, isLoading } = useLeads();
 
-  if (isLoading || !stats) return <DashboardSkeleton />;
+  const activeStats = stats || (leads.length > 0 ? LeadsService.computeStatsFromLeads(leads) : null);
+
+  if ((isLoading && leads.length === 0) || !activeStats) return <DashboardSkeleton />;
 
   const myLeads = leads.filter((l) => l.currentDepartment === "marketing");
+  const userName = user?.name || "";
   const dispatched = leads.filter(
-    (l) => l.createdBy?.includes(user.name) || (l.createdBy === user.name && l.currentDepartment !== "marketing")
+    (l) => (userName && l.createdBy?.includes(userName)) || (l.createdBy === userName && l.currentDepartment !== "marketing")
   );
 
   const recentIntake = [...myLeads]
@@ -53,14 +57,14 @@ export function MarketingDashboard() {
   }, [leads]);
 
   const activityEvents = buildActivityEvents(
-    leads.filter((l) => l.currentDepartment === "marketing" || l.createdBy?.includes(user.name)),
+    leads.filter((l) => l.currentDepartment === "marketing" || (userName && l.createdBy?.includes(userName))),
     6
   );
 
   const marketingMetrics = [
     {
       label: "In Marketing Queue",
-      value: stats.marketingCount,
+      value: activeStats.marketingCount,
       sublabel: "Awaiting outreach",
       icon: <Megaphone className="w-4 h-4 text-blue-500" />,
       highlight: true,
@@ -73,13 +77,13 @@ export function MarketingDashboard() {
     },
     {
       label: "Dispatched",
-      value: dispatched.length > 0 ? dispatched.length : stats.totalLeads - stats.marketingCount,
+      value: dispatched.length > 0 ? dispatched.length : activeStats.totalLeads - activeStats.marketingCount,
       sublabel: "Moved downstream",
       icon: <Send className="w-4 h-4 text-teal-500" />,
     },
     {
       label: "Total Pipeline",
-      value: stats.totalLeads,
+      value: activeStats.totalLeads,
       sublabel: "Global accounts",
       icon: <Users className="w-4 h-4 text-muted-foreground" />,
     },

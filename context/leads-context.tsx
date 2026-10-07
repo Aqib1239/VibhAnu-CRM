@@ -134,6 +134,16 @@ export function LeadsProvider({ children }: { children: React.ReactNode }) {
   useEffect(() => {
     setIsHydrated(true);
 
+    // CRITICAL: Do NOT start fetching before authentication is ready and user is established!
+    if (!isReady || !user) {
+      leadsRef.current = [];
+      setLeads([]);
+      setStats(null);
+      lastRoleFetchedRef.current = null;
+      setIsLoading(false);
+      return;
+    }
+
     let hasCachedData = false;
     try {
       const cachedLeadsStr = sessionStorage.getItem(LEADS_CACHE_KEY) || localStorage.getItem(LEADS_CACHE_KEY);
@@ -163,11 +173,11 @@ export function LeadsProvider({ children }: { children: React.ReactNode }) {
     }
 
     // Refresh ONLY once when auth becomes ready, or when active role genuinely changes
-    if (isReady && lastRoleFetchedRef.current !== user.role) {
+    if (lastRoleFetchedRef.current !== user.role) {
       lastRoleFetchedRef.current = user.role;
       refreshLeads();
     }
-  }, [isReady, user.role, refreshLeads]);
+  }, [isReady, user, user?.role, refreshLeads]);
 
   const getLeadById = async (id: string): Promise<Lead | null> => {
     return await LeadsService.getLeadById(id);
@@ -181,6 +191,7 @@ export function LeadsProvider({ children }: { children: React.ReactNode }) {
     initialRemarks?: string;
   }): Promise<Lead> => {
     try {
+      if (!user) throw new Error("Authentication required");
       const newLead = await LeadsService.createMarketingLead(data, user);
       await refreshLeads();
       toast.success("Lead Created Successfully", {
@@ -207,6 +218,7 @@ export function LeadsProvider({ children }: { children: React.ReactNode }) {
     }
   ): Promise<Lead> => {
     try {
+      if (!user) throw new Error("Authentication required");
       const updated = await LeadsService.scheduleCommunicationMeeting(leadId, data, user);
       await refreshLeads();
       toast.success("Meeting Scheduled & Transferred", {
@@ -234,6 +246,7 @@ export function LeadsProvider({ children }: { children: React.ReactNode }) {
     }
   ): Promise<Lead> => {
     try {
+      if (!user) throw new Error("Authentication required");
       const updated = await LeadsService.verifyVigilanceLead(leadId, data, user);
       await refreshLeads();
       toast.success("Vigilance Verified & Audio Attached", {
@@ -257,6 +270,7 @@ export function LeadsProvider({ children }: { children: React.ReactNode }) {
     }
   ): Promise<Lead> => {
     try {
+      if (!user) throw new Error("Authentication required");
       const updated = await LeadsService.allocateSupportLead(leadId, data, user);
       await refreshLeads();
       toast.success("Lead Allocated to Sales Queue", {
@@ -291,6 +305,7 @@ export function LeadsProvider({ children }: { children: React.ReactNode }) {
     }
   ): Promise<Lead> => {
     try {
+      if (!user) throw new Error("Authentication required");
       const updated = await LeadsService.claimSalesLead(leadId, data, user);
       await refreshLeads();
       toast.success("Lead Successfully Claimed!", {

@@ -16,13 +16,16 @@ import {
   BentoActivityTimeline,
   buildActivityEvents,
 } from "@/components/dashboard/shared";
+import { LeadsService } from "@/services/leads.service";
 import { MessageSquare, Phone, Calendar, Clock, ArrowRight, Lock } from "lucide-react";
 
 export function CommunicationDashboard() {
   const { user } = useAuth();
   const { leads, stats, isLoading } = useLeads();
 
-  if (isLoading || !stats) return <DashboardSkeleton />;
+  const activeStats = stats || (leads.length > 0 ? LeadsService.computeStatsFromLeads(leads) : null);
+
+  if ((isLoading && leads.length === 0) || !activeStats) return <DashboardSkeleton />;
 
   const commLeads = leads.filter((l) => l.currentDepartment === "communication");
   const withMeeting = commLeads.filter((l) => l.communicationDetails?.scheduledDate);
@@ -59,7 +62,7 @@ export function CommunicationDashboard() {
     },
     {
       label: "Ready for Vigilance",
-      value: stats.vigilanceCount,
+      value: activeStats.vigilanceCount,
       sublabel: "Transferred downstream",
       icon: <Clock className="w-4 h-4 text-amber-500" />,
     },

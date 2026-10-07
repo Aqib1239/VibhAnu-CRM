@@ -7,6 +7,7 @@ import { useLeads } from "@/context/leads-context";
 import { PageHeader } from "@/components/layout/PageHeader";
 import { RoleBadge } from "@/components/ui/role-badge";
 import { Button } from "@/components/ui/button";
+import { LeadsService } from "@/services/leads.service";
 import {
   DashboardSkeleton,
   BentoCard,
@@ -22,7 +23,9 @@ export function SupportDashboard() {
   const { user } = useAuth();
   const { leads, stats, isLoading } = useLeads();
 
-  if (isLoading || !stats) return <DashboardSkeleton />;
+  const activeStats = stats || (leads.length > 0 ? LeadsService.computeStatsFromLeads(leads) : null);
+
+  if ((isLoading && leads.length === 0) || !activeStats) return <DashboardSkeleton />;
 
   const supportLeads = leads.filter((l) => l.currentDepartment === "support");
 
@@ -73,7 +76,7 @@ export function SupportDashboard() {
     },
     {
       label: "Active in Sales",
-      value: stats.salesCount,
+      value: activeStats.salesCount,
       sublabel: "Assigned to executives",
       icon: <TrendingUp className="w-4 h-4 text-purple-500" />,
     },
