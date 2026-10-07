@@ -24,6 +24,7 @@ export interface PaginatedResponse<T> {
 class ApiClient {
   private baseUrl: string;
   private onAuthError?: () => Promise<string | null>;
+  private refreshPromise: Promise<string | null> | null = null;
 
   constructor() {
     this.baseUrl = process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000/api";
@@ -88,15 +89,22 @@ class ApiClient {
     const json = await res.json().catch(() => ({}));
 
     if (!res.ok) {
-      if (
-        res.status === 401 &&
-        !isRetry &&
-        !endpoint.includes("/auth/login") &&
-        this.onAuthError
-      ) {
-        // Attempt one-time re-authentication / session recovery
+      const isAuthEndpoint =
+        endpoint.includes("/auth/login") ||
+        endpoint.includes("/auth/logout") ||
+        endpoint.includes("/auth/refresh") ||
+        endpoint.includes("/auth/register");
+
+      if (res.status === 401 && !isRetry && !isAuthEndpoint && this.onAuthError) {
+        // Deduplicate in-flight auth recovery across concurrent requests
+        if (!this.refreshPromise) {
+          this.refreshPromise = this.onAuthError().finally(() => {
+            this.refreshPromise = null;
+          });
+        }
+
         try {
-          const newToken = await this.onAuthError();
+          const newToken = await this.refreshPromise;
           if (newToken) {
             const currentHeaders = new Headers(init.headers);
             currentHeaders.set("Authorization", `Bearer ${newToken}`);

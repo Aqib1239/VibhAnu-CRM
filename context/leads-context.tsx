@@ -78,10 +78,12 @@ export function LeadsProvider({ children }: { children: React.ReactNode }) {
   const [isRevalidating, setIsRevalidating] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  // Request race-condition counter
+  // Request race-condition counter and state refs
   const latestRequestId = React.useRef(0);
+  const leadsRef = React.useRef<Lead[]>([]);
+  const lastRoleFetchedRef = React.useRef<string | null>(null);
 
-  // 2. Fetch fresh data from backend
+  // 2. Fetch fresh data from backend — STABLE CALLBACK WITH ZERO STATE DEPENDENCIES
   const refreshLeads = useCallback(async (filters: LeadFilters = {}) => {
     const requestId = ++latestRequestId.current;
     setIsRevalidating(true);
@@ -101,6 +103,7 @@ export function LeadsProvider({ children }: { children: React.ReactNode }) {
       const freshLeads = leadsResponse?.data ?? [];
       const finalStats = computedStats || LeadsService.computeStatsFromLeads(freshLeads);
 
+      leadsRef.current = freshLeads;
       setLeads(freshLeads);
       setStats(finalStats);
 
@@ -117,7 +120,7 @@ export function LeadsProvider({ children }: { children: React.ReactNode }) {
       if (requestId === latestRequestId.current) {
         console.error("Failed to load leads", err);
         setError(err?.message || "Failed to load lead database");
-        setStats((prevStats) => prevStats || LeadsService.computeStatsFromLeads(leads));
+        setStats((prevStats) => prevStats || (leadsRef.current.length > 0 ? LeadsService.computeStatsFromLeads(leadsRef.current) : null));
       }
     } finally {
       if (requestId === latestRequestId.current) {
@@ -125,9 +128,9 @@ export function LeadsProvider({ children }: { children: React.ReactNode }) {
         setIsRevalidating(false);
       }
     }
-  }, [leads]);
+  }, []);
 
-  // 3. Hydrate cache AFTER initial mount and trigger fetch once auth is ready
+  // 3. Hydrate cache AFTER initial mount and trigger fetch ONCE when auth is ready or when role changes
   useEffect(() => {
     setIsHydrated(true);
 
@@ -139,6 +142,7 @@ export function LeadsProvider({ children }: { children: React.ReactNode }) {
       if (cachedLeadsStr) {
         const parsedLeads = JSON.parse(cachedLeadsStr);
         if (Array.isArray(parsedLeads) && parsedLeads.length > 0) {
+          leadsRef.current = parsedLeads;
           setLeads(parsedLeads);
           hasCachedData = true;
           if (cachedStatsStr) {
@@ -158,11 +162,12 @@ export function LeadsProvider({ children }: { children: React.ReactNode }) {
       setIsLoading(false);
     }
 
-    // Refresh once auth is ready, or when active role changes
-    if (isReady) {
+    // Refresh ONLY once when auth becomes ready, or when active role genuinely changes
+    if (isReady && lastRoleFetchedRef.current !== user.role) {
+      lastRoleFetchedRef.current = user.role;
       refreshLeads();
     }
-  }, [isReady, refreshLeads, user.role]);
+  }, [isReady, user.role, refreshLeads]);
 
   const getLeadById = async (id: string): Promise<Lead | null> => {
     return await LeadsService.getLeadById(id);

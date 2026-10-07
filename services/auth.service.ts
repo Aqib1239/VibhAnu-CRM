@@ -46,39 +46,47 @@ export class AuthService {
     }
   }
 
+  private static sessionPromise: Promise<string | null> | null = null;
+
   /**
    * Ensures a valid backend JWT session exists.
-   * If token is missing, expired, or a mock string,
-   * it automatically logs in with the credentials for the current user's role.
+   * Deduplicates concurrent calls to prevent multiple simultaneous login requests.
    */
   static async ensureSession(): Promise<string | null> {
     if (typeof window === "undefined") return null;
 
-    const existingToken = localStorage.getItem(STORAGE_KEY_TOKEN);
-    // Check if token exists and is a genuine JWT (3 segments separated by '.')
-    if (existingToken && existingToken.split(".").length === 3) {
+    if (this.sessionPromise) {
+      return this.sessionPromise;
+    }
+
+    this.sessionPromise = (async () => {
       try {
-        const payloadBase64 = existingToken.split(".")[1];
-        const payloadJson = JSON.parse(atob(payloadBase64));
-        if (payloadJson.exp && payloadJson.exp * 1000 > Date.now() + 60000) {
-          return existingToken;
+        const existingToken = localStorage.getItem(STORAGE_KEY_TOKEN);
+        if (existingToken && existingToken.split(".").length === 3) {
+          try {
+            const payloadBase64 = existingToken.split(".")[1];
+            const payloadJson = JSON.parse(atob(payloadBase64));
+            if (payloadJson.exp && payloadJson.exp * 1000 > Date.now() + 60000) {
+              return existingToken;
+            }
+          } catch (_) {}
         }
-      } catch (_) {
-        // If malformed or parse error, re-authenticate below
+
+        const currentUser = this.getCurrentUser();
+        const role = currentUser?.role || "ADMIN";
+        const creds = ROLE_CREDENTIALS[role] || ROLE_CREDENTIALS.ADMIN;
+
+        const session = await this.login(creds.email, creds.password);
+        return session.token;
+      } catch (err) {
+        console.warn("[AuthService] ensureSession login failed:", err);
+        return null;
+      } finally {
+        this.sessionPromise = null;
       }
-    }
+    })();
 
-    const currentUser = this.getCurrentUser();
-    const role = currentUser?.role || "ADMIN";
-    const creds = ROLE_CREDENTIALS[role] || ROLE_CREDENTIALS.ADMIN;
-
-    try {
-      const session = await this.login(creds.email, creds.password);
-      return session.token;
-    } catch (err) {
-      console.warn("[AuthService] ensureSession login failed:", err);
-      return null;
-    }
+    return this.sessionPromise;
   }
 
   /**
