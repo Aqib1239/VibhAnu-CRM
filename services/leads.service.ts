@@ -41,20 +41,27 @@ function mapBackendLead(raw: any): Lead {
   if (rawAudio && (rawAudio.url || rawAudio.storagePath || rawAudio.fileName || rawAudio.originalName)) {
     const rawUrl: string | undefined = rawAudio.url;
     let url = buildAudioUrl(leadId);
+
     if (rawUrl) {
-      if (rawUrl.startsWith("blob:") || rawUrl.startsWith("data:")) {
+      // 1. Direct Cloudinary CDN URL — use directly without appending internal JWT token
+      if (rawUrl.startsWith("https://res.cloudinary.com/")) {
+        url = rawUrl;
+      } else if (rawUrl.startsWith("blob:") || rawUrl.startsWith("data:")) {
+        // 2. Local client preview Blob/data URL
         url = rawUrl;
       } else if (rawUrl.startsWith("http://") || rawUrl.startsWith("https://")) {
-        const token =
-          typeof window !== "undefined"
-            ? localStorage.getItem("vibhanu_crm_token") || localStorage.getItem("vibhanu_auth_token")
-            : null;
-        if (token && rawUrl.includes("/audio") && !/[?&]token=/.test(rawUrl)) {
-          url = `${rawUrl}${rawUrl.includes("?") ? "&" : "?"}token=${encodeURIComponent(token)}`;
+        // 3. Absolute URL: only append token if it targets our internal backend lead audio endpoint
+        if (rawUrl.includes("/leads/") && rawUrl.includes("/audio") && !/[?&]token=/.test(rawUrl)) {
+          const token =
+            typeof window !== "undefined"
+              ? localStorage.getItem("vibhanu_crm_token") || localStorage.getItem("vibhanu_auth_token")
+              : null;
+          url = token ? `${rawUrl}${rawUrl.includes("?") ? "&" : "?"}token=${encodeURIComponent(token)}` : rawUrl;
         } else {
           url = rawUrl;
         }
       } else {
+        // 4. Relative backend path (e.g. legacy /api/leads/:id/audio)
         const cleanPath = rawUrl.startsWith("/") ? rawUrl : `/${rawUrl}`;
         let fullPath = cleanPath;
         if (cleanPath.startsWith("/api/")) {
@@ -67,13 +74,19 @@ function mapBackendLead(raw: any): Lead {
           typeof window !== "undefined"
             ? localStorage.getItem("vibhanu_crm_token") || localStorage.getItem("vibhanu_auth_token")
             : null;
-        if (token && fullPath.includes("/audio") && !/[?&]token=/.test(fullPath)) {
+        if (token && fullPath.includes("/leads/") && fullPath.includes("/audio") && !/[?&]token=/.test(fullPath)) {
           url = `${fullPath}${fullPath.includes("?") ? "&" : "?"}token=${encodeURIComponent(token)}`;
         } else {
           url = fullPath;
         }
       }
     }
+
+    const publicId =
+      rawAudio.publicId ||
+      (typeof rawAudio.storagePath === "string" && rawAudio.storagePath.includes("vibhanu-crm/")
+        ? rawAudio.storagePath
+        : undefined);
 
     audioData = {
       id: rawAudio.id || rawAudio._id || rawAudio.filename || `aud-${leadId}`,
@@ -87,6 +100,8 @@ function mapBackendLead(raw: any): Lead {
         ? (rawAudio.uploadedBy?.name || "System")
         : (rawAudio.uploadedBy || "System"),
       waveformSample: rawAudio.waveformSample,
+      publicId,
+      resourceType: rawAudio.resourceType || "video",
     };
   }
 

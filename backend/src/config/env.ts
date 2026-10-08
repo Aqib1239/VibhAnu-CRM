@@ -27,6 +27,9 @@ const envSchema = z.object({
     .string()
     .default("15728640")
     .transform((val) => parseInt(val, 10)),
+  CLOUDINARY_CLOUD_NAME: z.string().default("").transform((val) => val || process.env.CLOUDINARY_CLOUD_NAME || ""),
+  CLOUDINARY_API_KEY: z.string().default("").transform((val) => val || process.env.CLOUDINARY_API_KEY || ""),
+  CLOUDINARY_API_SECRET: z.string().default("").transform((val) => val || process.env.CLOUDINARY_API_SECRET || ""),
 });
 
 export type EnvConfig = z.infer<typeof envSchema>;

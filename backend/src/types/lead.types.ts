@@ -13,6 +13,8 @@ export interface IAudioMetadata {
   uploadedBy: string;
   uploadedAt: string;
   waveformSample?: number[];
+  publicId?: string;
+  resourceType?: string;
 }
 
 export interface IVerificationMetadata {

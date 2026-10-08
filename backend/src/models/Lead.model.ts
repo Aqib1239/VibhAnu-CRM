@@ -19,6 +19,8 @@ const AudioSchema = new Schema<IAudioMetadata>(
     uploadedBy: { type: String, required: true },
     uploadedAt: { type: String, required: true },
     waveformSample: { type: [Number], default: [] },
+    publicId: { type: String },
+    resourceType: { type: String, default: "video" },
   },
   { _id: false }
 );

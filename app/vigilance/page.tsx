@@ -101,9 +101,9 @@ export default function VigilancePage() {
         const audioData: AudioData = {
           id: `aud-${Date.now()}`,
           fileName: file.name || "Vigilance_Call_Recording.mp3",
-          fileSize: file.size || 3400000,
+          fileSize: file.size || 0,
           duration: 180,
-          url: localBlobUrl || DEMO_AUDIO_URL,
+          url: localBlobUrl,
           uploadedAt: new Date().toISOString(),
           uploadedBy: "Vikram Malhotra (Vigilance)",
           mimeType: file.type || "audio/mpeg",
@@ -116,6 +116,9 @@ export default function VigilancePage() {
   };
 
   const handleRemoveAudio = () => {
+    if (uploadedAudio?.url?.startsWith("blob:")) {
+      URL.revokeObjectURL(uploadedAudio.url);
+    }
     setUploadedAudio(null);
     setValue("hasAudio", false, { shouldValidate: true });
   };

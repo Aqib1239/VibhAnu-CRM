@@ -41,6 +41,7 @@ router.post(
   AudioController.uploadAudio
 );
 router.get("/:id/audio", AudioController.getAudio);
+router.delete("/:id/audio", requireRole(ROLES.VIGILANCE, ROLES.ADMIN), AudioController.deleteAudio);
 
 // 4. Workflow Transition: Communication -> Vigilance
 router.post(

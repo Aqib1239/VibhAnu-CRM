@@ -1,36 +1,15 @@
 import multer from "multer";
 import path from "path";
-import fs from "fs";
 import crypto from "crypto";
 import { Request } from "express";
 import { env } from "../config/env";
 import { logger } from "../config/logger";
+import { CloudinaryStorage } from "multer-storage-cloudinary";
+import { cloudinary } from "../config/cloudinary";
 
-import os from "os";
-
-// Determine safe upload directory (falls back to os.tmpdir() on Vercel / serverless)
-function getSafeUploadDir(): string {
-  if (process.env.VERCEL) {
-    return os.tmpdir();
-  }
-  const backendUploads = path.resolve(process.cwd(), "backend/uploads");
-  if (fs.existsSync(backendUploads)) {
-    return backendUploads;
-  }
-  const dir = path.resolve(process.cwd(), env.UPLOAD_DIR);
-  try {
-    if (!fs.existsSync(dir)) {
-      fs.mkdirSync(dir, { recursive: true });
-    }
-    return dir;
-  } catch (err) {
-    logger.warn({ err }, "Could not create configured upload dir, falling back to os.tmpdir()");
-    return os.tmpdir();
-  }
-}
-
-const uploadDir = getSafeUploadDir();
-
+// ─────────────────────────────────────────────────────────────
+// Allowed audio types (kept identical to your previous config)
+// ─────────────────────────────────────────────────────────────
 const ALLOWED_MIME_TYPES = new Set([
   "audio/mpeg",
   "audio/mp3",
@@ -46,23 +25,39 @@ const ALLOWED_MIME_TYPES = new Set([
   "audio/flac",
 ]);
 
-const ALLOWED_EXTENSIONS = new Set([".mp3", ".wav", ".ogg", ".webm", ".mp4", ".m4a", ".aac", ".flac"]);
+const ALLOWED_EXTENSIONS = new Set([
+  ".mp3", ".wav", ".ogg", ".webm", ".mp4", ".m4a", ".aac", ".flac",
+]);
 
-const storage = multer.diskStorage({
-  destination: (_req, _file, cb) => {
-    cb(null, uploadDir);
-  },
-  filename: (req: Request, file, cb) => {
+// ─────────────────────────────────────────────────────────────
+// Cloudinary storage engine
+// Audio is treated as `resource_type: "video"` in Cloudinary —
+// this is required, otherwise audio uploads are rejected.
+// ─────────────────────────────────────────────────────────────
+const storage = new CloudinaryStorage({
+  cloudinary,
+  params: async (req: Request, file) => {
     const rawExt = path.extname(file.originalname).toLowerCase();
-    const ext = ALLOWED_EXTENSIONS.has(rawExt) ? rawExt : ".mp3";
+    const ext = ALLOWED_EXTENSIONS.has(rawExt) ? rawExt.replace(".", "") : "mp3";
+
     const leadId = req.params.id || "lead";
     const sanitizedLeadId = leadId.replace(/[^a-zA-Z0-9-_]/g, "_");
     const uniqueSuffix = `${Date.now()}_${crypto.randomBytes(6).toString("hex")}`;
-    const safeFilename = `audio_${sanitizedLeadId}_${uniqueSuffix}${ext}`;
-    cb(null, safeFilename);
+
+    return {
+      folder: "vibhanu-crm/audio",
+      resource_type: "video",          // ← REQUIRED for audio
+      type: "upload",                  // public delivery; use "authenticated" if you need signed URLs
+      format: ext,
+      public_id: `audio_${sanitizedLeadId}_${uniqueSuffix}`,
+    };
   },
 });
 
+// ─────────────────────────────────────────────────────────────
+// Multer instance — same shape/API as before, so nothing else
+// in the codebase needs to change (audioUpload.single("audio")).
+// ─────────────────────────────────────────────────────────────
 export const audioUpload = multer({
   storage,
   limits: {
@@ -74,8 +69,15 @@ export const audioUpload = multer({
     const mime = file.mimetype.toLowerCase();
 
     if (!ALLOWED_MIME_TYPES.has(mime) && !ALLOWED_EXTENSIONS.has(ext)) {
-      logger.warn({ mime, ext, originalName: file.originalname }, "Rejected non-audio file upload");
-      return cb(new Error("Invalid audio file format. Allowed formats: MP3, WAV, OGG, WEBM, M4A, AAC, FLAC."));
+      logger.warn(
+        { mime, ext, originalName: file.originalname },
+        "Rejected non-audio file upload"
+      );
+      const err: any = new Error(
+        "Invalid audio file format. Allowed formats: MP3, WAV, OGG, WEBM, M4A, AAC, FLAC."
+      );
+      err.statusCode = 400;
+      return cb(err);
     }
 
     cb(null, true);

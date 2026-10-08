@@ -27,6 +27,8 @@ export interface AudioData {
   uploadedBy: string;
   mimeType: string;
   waveformSample?: number[];
+  publicId?: string;
+  resourceType?: string;
   /** Raw File object – only present for locally selected files before upload */
   _file?: File;
 }

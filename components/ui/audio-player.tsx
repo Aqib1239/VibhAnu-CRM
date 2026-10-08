@@ -82,70 +82,6 @@ const inferMimeType = (name?: string) => {
       return "audio/wav";
   }
 };
-
-/** Programmatically creates a lightweight synthetic audio blob URL as zero-dependency fallback */
-function createSyntheticAudioBlobUrl(durationSeconds = 12): string {
-  if (typeof window === "undefined") return "";
-  try {
-    const sampleRate = 22050;
-    const numSamples = Math.floor(sampleRate * durationSeconds);
-    const buffer = new ArrayBuffer(44 + numSamples * 2);
-    const view = new DataView(buffer);
-
-    // RIFF identifier
-    view.setUint32(0, 0x52494646, false); // "RIFF"
-    view.setUint32(4, 36 + numSamples * 2, true);
-    view.setUint32(8, 0x57415645, false); // "WAVE"
-
-    // fmt subchunk
-    view.setUint32(12, 0x666d7420, false); // "fmt "
-    view.setUint32(16, 16, true);
-    view.setUint16(20, 1, true); // PCM
-    view.setUint16(22, 1, true); // Mono
-    view.setUint32(24, sampleRate, true);
-    view.setUint32(28, sampleRate * 2, true);
-    view.setUint16(32, 2, true); // Block align
-    view.setUint16(34, 16, true); // 16-bit
-
-    // data subchunk
-    view.setUint32(36, 0x64617461, false); // "data"
-    view.setUint32(40, numSamples * 2, true);
-
-    let offset = 44;
-    for (let i = 0; i < numSamples; i++) {
-      const t = i / sampleRate;
-      let sample = 0;
-
-      // Telephone ring simulation & pleasant chime sequence
-      if ((t >= 0.5 && t <= 2.2) || (t >= 3.2 && t <= 4.9)) {
-        const ringT = t % 2.7;
-        if (ringT < 1.7) {
-          const env = Math.sin((Math.PI * ringT) / 1.7);
-          sample = 0.22 * env * (Math.sin(2 * Math.PI * 440 * t) + Math.sin(2 * Math.PI * 480 * t));
-        }
-      } else if (t >= 5.5) {
-        const chimeT = t - 5.5;
-        const chord =
-          Math.sin(2 * Math.PI * 330 * t) * 0.14 +
-          Math.sin(2 * Math.PI * 440 * t) * 0.14 +
-          Math.sin(2 * Math.PI * 554 * t) * 0.11;
-        const decay = Math.exp(-0.45 * (chimeT % 1.6));
-        sample = chord * decay * 0.55;
-      }
-
-      sample += Math.sin(2 * Math.PI * 100 * t) * 0.01;
-      const s = Math.max(-1, Math.min(1, sample));
-      view.setInt16(offset, s < 0 ? s * 0x8000 : s * 0x7fff, true);
-      offset += 2;
-    }
-
-    const blob = new Blob([view], { type: "audio/wav" });
-    return URL.createObjectURL(blob);
-  } catch {
-    return "";
-  }
-}
-
 const SKIP_SECONDS = 10;
 const BAR_COUNT = 56;
 const DEFAULT_FALLBACK_AUDIO = "/audio/sample-call.wav";
@@ -156,6 +92,11 @@ const DEFAULT_FALLBACK_AUDIO = "/audio/sample-call.wav";
  */
 function resolveAudioUrl(src: string): string {
   if (!src || src.startsWith("blob:") || src.startsWith("data:")) {
+    return src;
+  }
+
+  // Cloudinary direct CDN URLs should never have local tokens appended or be rewritten
+  if (src.startsWith("https://res.cloudinary.com/")) {
     return src;
   }
 
@@ -268,7 +209,7 @@ export function AudioPlayer({
     // 2. No source provided
     if (!src) {
       if (allowDemoFallback) {
-        const fallbackUrl = DEFAULT_FALLBACK_AUDIO || createSyntheticAudioBlobUrl(12);
+        const fallbackUrl = DEFAULT_FALLBACK_AUDIO;
         createdUrl = fallbackUrl.startsWith("blob:") ? fallbackUrl : null;
         setResolvedSrc(fallbackUrl);
         setIsUsingFallback(true);
@@ -320,12 +261,11 @@ export function AudioPlayer({
     };
 
     const onError = () => {
-      // Only switch to synthetic fallback if explicitly permitted
+      // Only switch to demo audio if explicitly permitted
       if (allowDemoFallback && !isFallbackActiveRef.current) {
         isFallbackActiveRef.current = true;
         setIsUsingFallback(true);
-        const synthUrl = createSyntheticAudioBlobUrl(12);
-        setResolvedSrc(synthUrl || DEFAULT_FALLBACK_AUDIO);
+        setResolvedSrc(DEFAULT_FALLBACK_AUDIO);
         setHasError(false);
         setErrorMessage(null);
         return;
@@ -335,6 +275,8 @@ export function AudioPlayer({
       setErrorMessage(
         code === 2
           ? "Network error occurred while loading audio."
+          : code === 4
+          ? "Audio recording is currently unavailable or format not supported."
           : "Audio file is temporarily unavailable."
       );
       setHasError(true);
@@ -450,9 +392,12 @@ export function AudioPlayer({
     setErrorMessage(null);
     const audio = audioRef.current;
     if (audio) {
+      if (src) {
+        setResolvedSrc(resolveAudioUrl(src));
+      }
       audio.load();
     }
-  }, []);
+  }, [src]);
 
   const skipBy = (delta: number) => seekTo((audioRef.current?.currentTime ?? currentTime) + delta);
 
