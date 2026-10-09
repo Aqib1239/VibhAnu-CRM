@@ -62,9 +62,22 @@ const config: Config = {
         ring: "hsl(var(--ring))",
       },
       borderRadius: {
+        "2xl": "1rem",
+        xl: "0.875rem",
         lg: "var(--radius)",
         md: "calc(var(--radius) - 2px)",
         sm: "calc(var(--radius) - 4px)",
+      },
+      boxShadow: {
+        "neu-raised": "var(--neu-shadow-raised)",
+        "neu-raised-sm": "var(--neu-shadow-raised-sm)",
+        "neu-raised-lg": "var(--neu-shadow-raised-lg)",
+        "neu-inset": "var(--neu-shadow-inset)",
+        "neu-inset-sm": "var(--neu-shadow-inset-sm)",
+        "neu-btn": "var(--neu-shadow-btn)",
+        "neu-btn-hover": "var(--neu-shadow-btn-hover)",
+        "neu-btn-active": "var(--neu-shadow-btn-active)",
+        "neu-glow": "var(--neu-shadow-glow)",
       },
       keyframes: {
         "pulse-subtle": {

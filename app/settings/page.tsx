@@ -85,15 +85,15 @@ export default function SettingsPage() {
                       type="button"
                       onClick={() => setAccent(key)}
                       className={cn(
-                        "flex items-center gap-2.5 p-2.5 rounded-xl border text-left transition-all duration-150 select-none",
+                        "flex items-center gap-2.5 p-3 rounded-xl border text-left transition-all duration-200 select-none",
                         isSelected
-                          ? "border-primary bg-primary/10 shadow-xs ring-1 ring-primary"
-                          : "border-border/80 bg-card hover:border-border hover:bg-muted/40"
+                          ? "shadow-neu-inset border-primary/50 bg-primary/10 ring-1 ring-primary/40 text-primary"
+                          : "shadow-neu-btn hover:shadow-neu-btn-hover active:shadow-neu-inset border-border/80 bg-card text-foreground"
                       )}
                     >
                       <span className={cn("w-4 h-4 rounded-full shrink-0 shadow-2xs", item.previewBg)} />
                       <div className="min-w-0 flex-1">
-                        <span className="text-[13px] font-semibold text-foreground truncate block leading-tight">
+                        <span className="text-[13px] font-semibold truncate block leading-tight">
                           {item.name}
                         </span>
                       </div>
@@ -111,7 +111,7 @@ export default function SettingsPage() {
             description="Current authenticated identity and role privileges"
           >
             <div className="space-y-4 text-[13px]">
-              <div className="flex items-center justify-between p-3.5 rounded-xl bg-muted/40 border border-border/80">
+              <div className="flex items-center justify-between p-4 rounded-2xl bg-card border border-border/80 shadow-neu-raised-sm">
                 <div>
                   <h4 className="font-semibold text-foreground text-[15px]">{user?.name}</h4>
                   <p className="text-muted-foreground text-[13px]">{user?.email}</p>
@@ -132,7 +132,7 @@ export default function SettingsPage() {
                       size="sm"
                       variant={role === r ? "primary" : "outline"}
                       onClick={() => switchRole(r)}
-                      className="text-[13px] h-8 justify-center"
+                      className="text-[13px] h-8 justify-center rounded-xl"
                     >
                       {ROLE_CONFIGS[r].badgeLabel}
                     </Button>
@@ -147,7 +147,7 @@ export default function SettingsPage() {
             title="REST API Architecture"
             description="End-to-end connected API service endpoints"
           >
-            <div className="p-3.5 bg-muted/30 rounded-xl border border-border space-y-2 font-mono text-[12.5px]">
+            <div className="p-4 bg-muted/30 rounded-2xl border border-border/80 shadow-neu-inset-sm space-y-2.5 font-mono text-[12.5px]">
               <div className="flex justify-between items-center">
                 <span className="text-foreground">POST /api/leads</span>
                 <span className="text-blue-600 dark:text-blue-400 font-semibold">Marketing Create</span>

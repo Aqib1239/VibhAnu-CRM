@@ -184,8 +184,8 @@ export default function VigilancePage() {
                     onClick={() => setSelectedLead(lead)}
                     className={`p-3.5 rounded-xl border transition-all cursor-pointer select-none ${
                       isSelected
-                        ? "border-amber-500/60 bg-amber-500/5 shadow-xs"
-                        : "border-border bg-card hover:border-border/80 hover:bg-muted/40"
+                        ? "border-amber-500/60 bg-amber-500/10 shadow-neu-inset"
+                        : "border-border/80 bg-card shadow-neu-raised-sm hover:shadow-neu-btn-hover hover:border-border"
                     }`}
                   >
                     <div className="flex items-center justify-between mb-1.5">
@@ -215,7 +215,7 @@ export default function VigilancePage() {
           {/* Right Column: Vigilance Audit Form */}
           <div className="lg:col-span-8">
             {selectedLead && (
-              <Card className="rounded-xl border border-border shadow-xs">
+              <Card className="rounded-2xl border border-border/80 shadow-neu-raised">
                 <CardHeader className="flex flex-row items-center justify-between py-4 px-5 border-b border-border/70">
                   <div>
                     <div className="flex items-center gap-2.5">
@@ -238,7 +238,7 @@ export default function VigilancePage() {
                 <CardContent className="p-5">
                   <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
                     {/* Locked Phone */}
-                    <div className="p-3 bg-muted/40 border border-border/80 rounded-lg text-[13px] flex items-center justify-between">
+                    <div className="p-3.5 bg-muted/30 border border-border/80 shadow-neu-inset-sm rounded-xl text-[13px] flex items-center justify-between">
                       <div className="flex items-center gap-2">
                         <Lock className="w-4 h-4 text-muted-foreground shrink-0" />
                         <span className="text-muted-foreground text-[12.5px]">
@@ -385,16 +385,16 @@ export default function VigilancePage() {
                           </div>
                         </div>
                       ) : (
-                        <div className="rounded-xl border-2 border-dashed border-border p-6 text-center hover:border-primary/50 transition-colors bg-muted/20">
+                        <div className="rounded-2xl border-2 border-dashed border-border/80 p-6 text-center shadow-neu-inset bg-muted/20 hover:border-primary/50 transition-colors">
                           {isUploading ? (
                             <div className="space-y-2.5">
-                              <div className="h-8 w-8 mx-auto rounded-full bg-primary/10 text-primary flex items-center justify-center animate-spin">
+                              <div className="h-8 w-8 mx-auto rounded-xl bg-primary/10 text-primary flex items-center justify-center animate-spin shadow-neu-inset-sm">
                                 <FileAudio className="w-4 h-4" />
                               </div>
                               <p className="text-[14px] font-semibold text-foreground">
                                 Uploading audio... {uploadProgress}%
                               </p>
-                              <div className="w-48 mx-auto h-1.5 bg-muted rounded-full overflow-hidden">
+                              <div className="w-48 mx-auto h-2 bg-muted/80 rounded-full overflow-hidden shadow-neu-inset-sm">
                                 <div
                                   className="h-full bg-primary transition-all duration-200"
                                   style={{ width: `${uploadProgress}%` }}
@@ -403,7 +403,7 @@ export default function VigilancePage() {
                             </div>
                           ) : (
                             <div className="space-y-2">
-                              <div className="h-10 w-10 mx-auto rounded-lg bg-muted flex items-center justify-center text-muted-foreground">
+                              <div className="h-10 w-10 mx-auto rounded-xl bg-card border border-border/70 shadow-neu-btn flex items-center justify-center text-muted-foreground">
                                 <Upload className="w-5 h-5" />
                               </div>
                               <div>

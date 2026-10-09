@@ -113,7 +113,7 @@ export default function LeadsPage() {
       </PageHeader>
 
       {/* Filter and Search Bar */}
-      <Card className="p-4 shadow-2xs space-y-3">
+      <Card className="p-4 shadow-neu-raised rounded-2xl border border-border/80 space-y-3">
         <div className="flex flex-col sm:flex-row items-center gap-3">
           <div className="relative flex-1 w-full">
             <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
@@ -125,7 +125,7 @@ export default function LeadsPage() {
                 setSearchQuery(e.target.value);
                 setCurrentPage(1);
               }}
-              className="flex h-10 w-full rounded-lg border border-input bg-background pl-10 pr-3.5 py-2 text-[14px] text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary/40"
+              className="flex h-10 w-full rounded-xl border border-border/80 bg-background/80 shadow-neu-inset pl-10 pr-3.5 py-2 text-[14px] text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary/40 transition-all"
             />
           </div>
 
@@ -136,7 +136,7 @@ export default function LeadsPage() {
                 setDepartmentFilter(e.target.value as Department | "all");
                 setCurrentPage(1);
               }}
-              className="flex h-10 w-full rounded-lg border border-input bg-background px-3 py-2 text-[14px] text-foreground focus:outline-none focus:ring-2 focus:ring-primary/40 font-medium"
+              className="flex h-10 w-full rounded-xl border border-border/80 bg-background/80 shadow-neu-inset px-3 py-2 text-[13.5px] text-foreground focus:outline-none focus:ring-2 focus:ring-primary/40 font-medium transition-all"
             >
               <option value="all">All Departments</option>
               <option value="marketing">Marketing</option>
@@ -155,7 +155,7 @@ export default function LeadsPage() {
                 setStatusFilter(e.target.value as LeadStatus | "all");
                 setCurrentPage(1);
               }}
-              className="flex h-10 w-full rounded-lg border border-input bg-background px-3 py-2 text-[14px] text-foreground focus:outline-none focus:ring-2 focus:ring-primary/40 font-medium"
+              className="flex h-10 w-full rounded-xl border border-border/80 bg-background/80 shadow-neu-inset px-3 py-2 text-[13.5px] text-foreground focus:outline-none focus:ring-2 focus:ring-primary/40 font-medium transition-all"
             >
               <option value="all">All Statuses</option>
               <option value="new">New Entry</option>
@@ -173,7 +173,7 @@ export default function LeadsPage() {
               size="sm"
               onClick={resetFilters}
               leftIcon={<RotateCcw className="w-3.5 h-3.5" />}
-              className="text-[13px] h-10 text-muted-foreground px-3 shrink-0"
+              className="text-[13px] h-10 text-muted-foreground px-3 shrink-0 rounded-xl"
             >
               Reset
             </Button>

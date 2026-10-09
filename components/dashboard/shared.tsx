@@ -76,13 +76,13 @@ export function BentoCard({
       animate={shouldReduceMotion ? { opacity: 1 } : { opacity: 1, y: 0 }}
       transition={{ duration: 0.3, ease: [0.22, 1, 0.36, 1] }}
       className={cn(
-        "rounded-2xl border border-border/80 dark:border-border/60 bg-card text-card-foreground shadow-2xs transition-all duration-200 ease-out hover:border-border hover:shadow-xs flex flex-col justify-between overflow-hidden",
+        "rounded-2xl border border-border/80 dark:border-border/50 bg-card text-card-foreground shadow-neu-raised transition-all duration-200 ease-out hover:shadow-neu-raised-lg flex flex-col justify-between overflow-hidden",
         className
       )}
       {...(props as any)}
     >
       {(title || action || badge) && (
-        <div className="flex items-center justify-between p-5 sm:p-6 border-b border-border/40 gap-3">
+        <div className="flex items-center justify-between p-5 sm:p-6 border-b border-border/50 gap-3">
           <div>
             <div className="flex items-center gap-2.5">
               {title && (
@@ -125,16 +125,16 @@ export function BentoKpiRow({ metrics }: { metrics: BentoMetric[] }) {
         <div
           key={idx}
           className={cn(
-            "p-4 sm:p-5 rounded-xl border transition-all duration-150 flex flex-col justify-between",
+            "p-4 sm:p-5 rounded-2xl border transition-all duration-200 flex flex-col justify-between",
             m.highlight
-              ? "border-primary/25 bg-primary/5 dark:bg-primary/10"
-              : "border-border/70 bg-card hover:border-border/90"
+              ? "border-primary/30 bg-primary/5 dark:bg-primary/10 shadow-neu-raised-sm ring-1 ring-primary/20"
+              : "border-border/80 dark:border-border/50 bg-card shadow-neu-raised-sm hover:shadow-neu-raised"
           )}
         >
           <div className="flex items-center justify-between mb-2">
             <span className="text-[13px] font-medium text-muted-foreground truncate">{m.label}</span>
             {m.icon && (
-              <div className="h-7 w-7 rounded-lg bg-muted/60 flex items-center justify-center text-muted-foreground shrink-0 border border-border/40">
+              <div className="h-8 w-8 rounded-xl bg-muted/60 dark:bg-muted/40 shadow-neu-inset-sm flex items-center justify-center text-muted-foreground shrink-0 border border-border/60">
                 {m.icon}
               </div>
             )}
@@ -325,9 +325,9 @@ export function BentoWorkloadMatrix({ stats }: { stats: DashboardStats }) {
                   {d.count} ({percent}%)
                 </span>
               </div>
-              <div className="h-2 w-full bg-muted/80 rounded-full overflow-hidden">
+              <div className="h-2.5 w-full bg-muted/80 dark:bg-muted/50 shadow-neu-inset-sm rounded-full overflow-hidden p-[2px]">
                 <div
-                  className={`h-full ${d.color} transition-all duration-300 rounded-full`}
+                  className={`h-full ${d.color} transition-all duration-300 rounded-full shadow-xs`}
                   style={{ width: `${percent}%` }}
                 />
               </div>
@@ -365,7 +365,7 @@ export function BentoActivityTimeline({
         <div className="space-y-4">
           {events.map((event, idx) => (
             <div key={idx} className="flex items-start gap-3 border-b border-border/40 pb-3.5 last:border-0 last:pb-0">
-              <div className="h-6 w-6 rounded-md bg-primary/10 text-primary flex items-center justify-center font-bold text-[10px] shrink-0 font-mono mt-0.5 border border-primary/20">
+              <div className="h-7 w-7 rounded-xl bg-muted/60 dark:bg-muted/40 text-primary shadow-neu-inset-sm flex items-center justify-center font-bold text-[10.5px] shrink-0 font-mono mt-0.5 border border-border/60">
                 {event.userName ? getInitials(event.userName) : "VA"}
               </div>
               <div className="min-w-0 flex-1">
@@ -403,9 +403,9 @@ export function BentoAlertBanner({
   if (items.length === 0) return null;
 
   return (
-    <div className="rounded-2xl border border-amber-200/80 dark:border-amber-900/40 bg-amber-500/5 dark:bg-amber-950/20 p-4.5 flex flex-col sm:flex-row sm:items-center justify-between gap-3 shadow-2xs">
+    <div className="rounded-2xl border border-amber-300/80 dark:border-amber-900/40 bg-amber-500/5 dark:bg-amber-950/20 p-4.5 flex flex-col sm:flex-row sm:items-center justify-between gap-3 shadow-neu-raised-sm">
       <div className="flex items-center gap-3">
-        <div className="p-2 rounded-xl bg-amber-500/10 text-amber-600 dark:text-amber-400 shrink-0 border border-amber-500/20">
+        <div className="p-2 rounded-xl bg-amber-500/10 text-amber-600 dark:text-amber-400 shrink-0 border border-amber-500/20 shadow-neu-inset-sm">
           <AlertCircle className="w-4.5 h-4.5" />
         </div>
         <div>

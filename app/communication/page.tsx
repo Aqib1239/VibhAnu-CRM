@@ -116,8 +116,8 @@ export default function CommunicationPage() {
                     onClick={() => setSelectedLead(lead)}
                     className={`p-3.5 rounded-xl border transition-all cursor-pointer select-none ${
                       isSelected
-                        ? "border-primary/60 bg-primary/5 shadow-xs"
-                        : "border-border bg-card hover:border-border/80 hover:bg-muted/40"
+                        ? "border-primary/60 bg-primary/10 shadow-neu-inset"
+                        : "border-border/80 bg-card shadow-neu-raised-sm hover:shadow-neu-btn-hover hover:border-border"
                     }`}
                   >
                     <div className="flex items-center justify-between mb-1.5">
@@ -147,7 +147,7 @@ export default function CommunicationPage() {
           {/* Right Column: Master Detail Form */}
           <div className="lg:col-span-8">
             {selectedLead && (
-              <Card className="rounded-xl border border-border shadow-xs">
+              <Card className="rounded-2xl border border-border/80 shadow-neu-raised">
                 <CardHeader className="flex flex-row items-center justify-between py-4 px-5 border-b border-border/70">
                   <div>
                     <div className="flex items-center gap-2.5">
@@ -170,7 +170,7 @@ export default function CommunicationPage() {
                 <CardContent className="p-5">
                   <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
                     {/* Locked Phone Notice */}
-                    <div className="p-3 bg-muted/40 border border-border/80 rounded-lg text-[13px] flex items-center justify-between">
+                    <div className="p-3.5 bg-muted/30 border border-border/80 shadow-neu-inset-sm rounded-xl text-[13px] flex items-center justify-between">
                       <div className="flex items-center gap-2">
                         <Lock className="w-4 h-4 text-muted-foreground shrink-0" />
                         <span className="text-muted-foreground text-[12.5px]">

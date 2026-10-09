@@ -32,13 +32,13 @@ export function TableSkeleton({ rows = 5, cols = 6 }: { rows?: number; cols?: nu
 
 export function CardSkeleton() {
   return (
-    <div className="rounded-lg border border-border bg-card p-5 space-y-4">
+    <div className="rounded-2xl border border-border/80 bg-card p-5 space-y-4 shadow-neu-raised">
       <div className="flex items-center justify-between">
-        <Skeleton className="h-4 w-28" />
-        <Skeleton className="h-8 w-8 rounded-md" />
+        <Skeleton className="h-4 w-28 rounded-lg" />
+        <Skeleton className="h-8 w-8 rounded-xl" />
       </div>
-      <Skeleton className="h-8 w-20" />
-      <Skeleton className="h-3 w-40" />
+      <Skeleton className="h-8 w-20 rounded-lg" />
+      <Skeleton className="h-3 w-40 rounded-lg" />
     </div>
   );
 }
@@ -59,15 +59,15 @@ export function ErrorState({
   return (
     <div
       className={cn(
-        "flex min-h-[280px] flex-col items-center justify-center rounded-lg border border-rose-200 dark:border-rose-900/40 bg-rose-500/5 p-8 text-center",
+        "flex min-h-[280px] flex-col items-center justify-center rounded-2xl border border-rose-300/60 dark:border-rose-900/40 bg-rose-500/5 shadow-neu-raised p-8 text-center",
         className
       )}
     >
-      <div className="flex h-12 w-12 items-center justify-center rounded-full bg-rose-500/10 text-rose-600 dark:text-rose-400 mb-3.5">
+      <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-card border border-rose-300/40 text-rose-600 dark:text-rose-400 mb-3.5 shadow-neu-btn">
         <AlertTriangle className="h-6 w-6" />
       </div>
-      <h3 className="text-sm font-semibold text-foreground tracking-tight">{title}</h3>
-      <p className="mt-1 max-w-sm text-xs text-muted-foreground leading-relaxed">
+      <h3 className="text-[15px] font-semibold text-foreground tracking-tight">{title}</h3>
+      <p className="mt-1 max-w-sm text-[13px] text-muted-foreground leading-relaxed">
         {message}
       </p>
       {onRetry && (

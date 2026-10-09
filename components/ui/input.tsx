@@ -20,10 +20,10 @@ export const Input = React.forwardRef<HTMLInputElement, InputProps>(
           type={type}
           disabled={disabled}
           className={cn(
-            "flex h-10 w-full rounded-lg border border-input bg-background px-3.5 py-2 text-[15px] text-foreground shadow-xs transition-colors file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground/60 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/40 focus-visible:ring-offset-1 disabled:cursor-not-allowed disabled:opacity-50 disabled:bg-muted/40",
+            "flex h-10 w-full rounded-xl border border-border/80 bg-background/80 dark:bg-muted/40 px-3.5 py-2 text-[14.5px] text-foreground shadow-neu-inset transition-all file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground/60 focus-visible:outline-none focus-visible:border-primary/60 focus-visible:ring-2 focus-visible:ring-primary/25 disabled:cursor-not-allowed disabled:opacity-50",
             leftIcon && "pl-10",
             rightIcon && "pr-10",
-            error && "border-destructive focus-visible:ring-destructive/40",
+            error && "border-destructive focus-visible:ring-destructive/30",
             className
           )}
           ref={ref}
@@ -49,8 +49,8 @@ export const Textarea = React.forwardRef<HTMLTextAreaElement, TextareaProps>(
     return (
       <textarea
         className={cn(
-          "flex min-h-[90px] w-full rounded-lg border border-input bg-background px-3.5 py-2.5 text-[15px] text-foreground shadow-xs placeholder:text-muted-foreground/60 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/40 focus-visible:ring-offset-1 disabled:cursor-not-allowed disabled:opacity-50 disabled:bg-muted/40 leading-relaxed",
-          error && "border-destructive focus-visible:ring-destructive/40",
+          "flex min-h-[90px] w-full rounded-xl border border-border/80 bg-background/80 dark:bg-muted/40 px-3.5 py-2.5 text-[14.5px] text-foreground shadow-neu-inset transition-all placeholder:text-muted-foreground/60 focus-visible:outline-none focus-visible:border-primary/60 focus-visible:ring-2 focus-visible:ring-primary/25 disabled:cursor-not-allowed disabled:opacity-50 leading-relaxed",
+          error && "border-destructive focus-visible:ring-destructive/30",
           className
         )}
         ref={ref}

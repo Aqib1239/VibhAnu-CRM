@@ -15,7 +15,7 @@ export function RoleBadge({ role, className, size = "sm" }: RoleBadgeProps) {
   return (
     <span
       className={cn(
-        "inline-flex items-center rounded-md font-mono font-medium border select-none transition-colors",
+        "inline-flex items-center rounded-lg font-mono font-semibold border select-none transition-all shadow-2xs",
         config.color,
         size === "sm" ? "px-2 py-0.5 text-[11px] tracking-wider" : "px-2.5 py-1 text-[12px]",
         className

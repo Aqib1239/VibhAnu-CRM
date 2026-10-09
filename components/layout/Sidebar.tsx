@@ -95,13 +95,13 @@ export function Sidebar({
               href={item.href}
               onClick={() => setIsMobileOpen && setIsMobileOpen(false)}
               className={cn(
-                "flex items-center rounded-lg text-[14px] font-medium transition-colors duration-200 select-none",
+                "flex items-center rounded-xl text-[14px] font-medium transition-all duration-200 select-none",
                 isActive
-                  ? "bg-primary/10 text-primary font-semibold border border-primary/15 shadow-2xs dark:bg-primary/15 dark:text-primary dark:border-primary/20"
-                  : "text-muted-foreground hover:bg-muted/70 hover:text-foreground border border-transparent",
+                  ? "bg-card text-primary font-semibold border border-primary/25 shadow-neu-inset dark:border-primary/30"
+                  : "text-muted-foreground hover:bg-muted/40 hover:text-foreground hover:shadow-neu-raised-sm border border-transparent",
                 isCollapsed
                   ? "justify-center px-0 h-10 w-10 mx-auto"
-                  : "gap-3 px-3 py-2 w-full"
+                  : "gap-3 px-3 py-2.5 w-full"
               )}
             >
               <Icon
@@ -125,10 +125,10 @@ export function Sidebar({
                 {badgeCount !== null && badgeCount > 0 && (
                   <span
                     className={cn(
-                      "ml-auto text-[11px] font-mono tabular-nums px-2 py-0.5 rounded-full border shrink-0 transition-colors duration-200",
+                      "ml-auto text-[11px] font-mono tabular-nums px-2 py-0.5 rounded-full shrink-0 transition-all duration-200",
                       isActive
-                        ? "bg-primary text-primary-foreground border-transparent font-semibold shadow-2xs"
-                        : "bg-muted text-muted-foreground border-border/50 group-hover:border-border"
+                        ? "bg-primary text-primary-foreground border-transparent font-semibold shadow-xs"
+                        : "bg-muted/70 text-muted-foreground border border-border/60 shadow-neu-inset-sm"
                     )}
                   >
                     {badgeCount}
@@ -139,7 +139,7 @@ export function Sidebar({
 
             {/* Hover Tooltip when collapsed */}
             {isCollapsed && (
-              <div className="fixed left-[78px] ml-1 hidden group-hover:flex items-center gap-2 z-50 rounded-md bg-popover px-3 py-1.5 text-[13px] text-popover-foreground shadow-md border border-border whitespace-nowrap animate-in fade-in-50">
+              <div className="fixed left-[78px] ml-1 hidden group-hover:flex items-center gap-2 z-50 rounded-xl bg-card px-3 py-1.5 text-[13px] text-foreground shadow-neu-raised border border-border/80 whitespace-nowrap animate-in fade-in-50">
                 <span className="font-medium">{item.title}</span>
                 {badgeCount !== null && badgeCount > 0 && (
                   <span className="bg-primary/15 text-primary font-mono text-[11px] px-1.5 py-0.5 rounded-full font-semibold">
@@ -167,17 +167,17 @@ export function Sidebar({
       {/* Sidebar Container */}
       <aside
         className={cn(
-          "fixed top-0 bottom-0 left-0 z-40 flex flex-col border-r border-border bg-card transition-[width,transform] duration-350 ease-[cubic-bezier(0.22,1,0.36,1)] md:translate-x-0 ",
+          "fixed top-0 bottom-0 left-0 z-40 flex flex-col border-r border-border/80 bg-card shadow-[4px_0_18px_rgba(166,161,189,0.18)] dark:shadow-[4px_0_18px_rgba(0,0,0,0.45)] transition-[width,transform] duration-350 ease-[cubic-bezier(0.22,1,0.36,1)] md:translate-x-0",
           isCollapsed ? "w-[72px]" : "w-[244px]",
           isMobileOpen
-            ? "translate-x-0 w-[244px] shadow-xl"
+            ? "translate-x-0 w-[244px] shadow-neu-raised-lg"
             : "-translate-x-full md:translate-x-0"
         )}
       >
         {/* Brand Header — Aligned with 64px main header datum line */}
         <div
           className={cn(
-            "relative flex h-16 shrink-0 items-center border-b border-border/80 transition-all duration-350 ease-[cubic-bezier(0.22,1,0.36,1)]",
+            "relative flex h-16 shrink-0 items-center border-b border-border/70 transition-all duration-350 ease-[cubic-bezier(0.22,1,0.36,1)]",
             isCollapsed ? "justify-center px-0" : "px-4"
           )}
         >
@@ -190,7 +190,7 @@ export function Sidebar({
             aria-label="Vibh-Anu CRM"
           >
             {/* Brand Mark — Centered in collapsed mode, stable size */}
-            <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-primary text-primary-foreground font-mono text-sm font-bold shadow-xs transition-transform duration-200">
+            <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-xl bg-primary text-primary-foreground font-mono text-sm font-bold shadow-[2px_2px_8px_rgba(97,75,238,0.35),-2px_-2px_6px_rgba(255,255,255,0.85)] dark:shadow-[2px_2px_8px_rgba(0,0,0,0.5)] transition-transform duration-200">
               VA
             </div>
 
@@ -218,9 +218,9 @@ export function Sidebar({
             onClick={() => setIsCollapsed(!isCollapsed)}
             className={cn(
               "absolute hidden md:flex h-7 w-7 items-center justify-center z-80",
-              "border border-gray-300 dark:border-gray-600 rounded-full text-muted-foreground",
-              "bg-card hover:bg-muted hover:text-foreground shadow-sm",
-              "transition-colors duration-150",
+              "border border-border/80 rounded-full text-muted-foreground",
+              "bg-card hover:text-foreground shadow-neu-btn hover:shadow-neu-btn-hover active:shadow-neu-inset",
+              "transition-all duration-150",
               "top-1/2 -translate-y-1/2",
               "-right-3"
             )}

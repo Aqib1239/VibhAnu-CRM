@@ -40,7 +40,7 @@ export default function ForgotPasswordPage() {
 
       <div className="w-full max-w-md space-y-6">
         <div className="text-center space-y-2">
-          <div className="h-12 w-12 rounded-xl bg-primary text-primary-foreground flex items-center justify-center font-bold font-mono text-xl mx-auto shadow-sm">
+          <div className="h-12 w-12 rounded-2xl bg-primary text-primary-foreground flex items-center justify-center font-bold font-mono text-xl mx-auto shadow-neu-btn">
             VA
           </div>
           <h1 className="text-2xl font-bold text-foreground tracking-tight">Account Recovery</h1>
@@ -49,11 +49,11 @@ export default function ForgotPasswordPage() {
           </p>
         </div>
 
-        <div className="rounded-xl border border-border bg-card p-6 shadow-sm space-y-4">
+        <div className="rounded-2xl border border-border/80 bg-card p-6 sm:p-8 shadow-neu-raised-lg space-y-4">
           {isSubmitted ? (
             <div className="text-center space-y-3 py-2">
-              <div className="h-10 w-10 rounded-full bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 flex items-center justify-center mx-auto">
-                <CheckCircle2 className="w-5 h-5" />
+              <div className="h-12 w-12 rounded-2xl bg-card border border-emerald-500/20 text-emerald-600 dark:text-emerald-400 flex items-center justify-center mx-auto shadow-neu-btn">
+                <CheckCircle2 className="w-6 h-6" />
               </div>
               <h3 className="text-sm font-semibold text-foreground">Password Reset Link Dispatched</h3>
               <p className="text-xs text-muted-foreground leading-relaxed">

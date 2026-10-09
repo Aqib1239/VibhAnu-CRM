@@ -123,8 +123,8 @@ export default function SupportPage() {
                     onClick={() => setSelectedLead(lead)}
                     className={`p-3.5 rounded-xl border transition-all cursor-pointer select-none ${
                       isSelected
-                        ? "border-teal-500/60 bg-teal-500/5 shadow-xs"
-                        : "border-border bg-card hover:border-border/80 hover:bg-muted/40"
+                        ? "border-teal-500/60 bg-teal-500/10 shadow-neu-inset"
+                        : "border-border/80 bg-card shadow-neu-raised-sm hover:shadow-neu-btn-hover hover:border-border"
                     }`}
                   >
                     <div className="flex items-center justify-between mb-1.5">
@@ -154,7 +154,7 @@ export default function SupportPage() {
           {/* Right Column: Verification & Allocation */}
           <div className="lg:col-span-8">
             {selectedLead && (
-              <Card className="rounded-xl border border-border shadow-xs">
+              <Card className="rounded-2xl border border-border/80 shadow-neu-raised">
                 <CardHeader className="flex flex-row items-center justify-between py-4 px-5 border-b border-border/70">
                   <div>
                     <div className="flex items-center gap-2.5">
@@ -177,7 +177,7 @@ export default function SupportPage() {
                 <CardContent className="p-5 space-y-4">
                   <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
                     {/* Information Summary */}
-                    <div className="rounded-xl border border-border bg-muted/20 p-4 space-y-3 text-[13px]">
+                    <div className="rounded-2xl border border-border/80 bg-muted/20 shadow-neu-inset-sm p-4 space-y-3 text-[13px]">
                       <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                         <div>
                           <span className="text-muted-foreground block text-[11px] font-mono uppercase tracking-wider">Prospect:</span>
@@ -225,8 +225,8 @@ export default function SupportPage() {
 
                       <div className="space-y-2.5">
                         {/* Check 1 */}
-                        <label className={`flex items-start gap-3 p-3 rounded-xl border transition-colors cursor-pointer select-none ${
-                          isDateVerified ? "border-teal-500/50 bg-teal-500/5" : "border-border bg-card hover:bg-muted/40"
+                        <label className={`flex items-start gap-3 p-3.5 rounded-xl border transition-all cursor-pointer select-none ${
+                          isDateVerified ? "border-teal-500/50 bg-teal-500/10 shadow-neu-inset" : "border-border/80 bg-card shadow-neu-raised-sm hover:shadow-neu-btn-hover"
                         }`}>
                           <input
                             type="checkbox"
@@ -244,8 +244,8 @@ export default function SupportPage() {
                         </label>
 
                         {/* Check 2 */}
-                        <label className={`flex items-start gap-3 p-3 rounded-xl border transition-colors cursor-pointer select-none ${
-                          isTimeVerified ? "border-teal-500/50 bg-teal-500/5" : "border-border bg-card hover:bg-muted/40"
+                        <label className={`flex items-start gap-3 p-3.5 rounded-xl border transition-all cursor-pointer select-none ${
+                          isTimeVerified ? "border-teal-500/50 bg-teal-500/10 shadow-neu-inset" : "border-border/80 bg-card shadow-neu-raised-sm hover:shadow-neu-btn-hover"
                         }`}>
                           <input
                             type="checkbox"
@@ -263,8 +263,8 @@ export default function SupportPage() {
                         </label>
 
                         {/* Check 3 */}
-                        <label className={`flex items-start gap-3 p-3 rounded-xl border transition-colors cursor-pointer select-none ${
-                          isAddressVerified ? "border-teal-500/50 bg-teal-500/5" : "border-border bg-card hover:bg-muted/40"
+                        <label className={`flex items-start gap-3 p-3.5 rounded-xl border transition-all cursor-pointer select-none ${
+                          isAddressVerified ? "border-teal-500/50 bg-teal-500/10 shadow-neu-inset" : "border-border/80 bg-card shadow-neu-raised-sm hover:shadow-neu-btn-hover"
                         }`}>
                           <input
                             type="checkbox"

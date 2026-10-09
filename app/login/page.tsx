@@ -12,22 +12,24 @@ import { Input, Label } from "@/components/ui/input";
 import { ThemeToggle } from "@/components/ui/theme-toggle";
 import { Role } from "@/types/auth";
 import { MOCK_USERS, ROLE_CONFIGS } from "@/constants/roles";
-import { 
-  Building2, 
-  Lock, 
-  Mail, 
-  Eye, 
-  EyeOff, 
-  Sparkles, 
+import {
+  Building2,
+  Lock,
+  Mail,
+  Eye,
+  EyeOff,
+  Sparkles,
   ArrowRight,
-  ShieldCheck
+  ShieldCheck,
 } from "lucide-react";
+import { cn } from "@/lib/utils";
 
 export default function LoginPage() {
   const router = useRouter();
   const { login, user, isReady } = useAuth();
   const [showPassword, setShowPassword] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
+  const [selectedRole, setSelectedRole] = useState<Role>("ADMIN");
 
   React.useEffect(() => {
     if (isReady && user) {
@@ -63,8 +65,16 @@ export default function LoginPage() {
 
   const handleRolePreset = (role: Role) => {
     const user = MOCK_USERS[role];
-    setValue("email", user.email, { shouldValidate: true });
-    setValue("password", "VibhAnu@123", { shouldValidate: true });
+
+    setSelectedRole(role);
+
+    setValue("email", user.email, {
+      shouldValidate: true,
+    });
+
+    setValue("password", "VibhAnu@123", {
+      shouldValidate: true,
+    });
   };
 
   return (
@@ -77,17 +87,19 @@ export default function LoginPage() {
       <div className="w-full max-w-md space-y-6">
         {/* Brand Header */}
         <div className="text-center space-y-2">
-          <div className="h-12 w-12 rounded-xl bg-primary text-primary-foreground flex items-center justify-center font-bold font-mono text-xl mx-auto shadow-xs">
+          <div className="h-12 w-12 rounded-2xl bg-primary text-primary-foreground flex items-center justify-center font-bold font-mono text-xl mx-auto shadow-neu-btn">
             VA
           </div>
-          <h1 className="text-[26px] font-semibold text-foreground tracking-tight">Vibh-Anu CRM</h1>
+          <h1 className="text-[26px] font-semibold text-foreground tracking-tight">
+            Vibh-Anu CRM
+          </h1>
           <p className="text-[14px] text-muted-foreground">
             Enterprise B2B Lead Management & Lifecycle Engine
           </p>
         </div>
 
         {/* Login Form Card */}
-        <div className="rounded-xl border border-border bg-card p-6 sm:p-7 shadow-xs space-y-5">
+        <div className="rounded-2xl border border-border/80 bg-card p-6 sm:p-8 shadow-neu-raised-lg space-y-5">
           <form onSubmit={handleSubmit(onSubmit)} className="space-y-4.5">
             {/* Email Field */}
             <div className="space-y-1.5">
@@ -103,14 +115,20 @@ export default function LoginPage() {
                 {...register("email")}
               />
               {errors.email && (
-                <p className="text-[12px] text-destructive">{errors.email.message}</p>
+                <p className="text-[12px] text-destructive">
+                  {errors.email.message}
+                </p>
               )}
             </div>
 
             {/* Password Field */}
             <div className="space-y-1.5">
               <div className="flex items-center justify-between">
-                <Label htmlFor="login-password" required className="text-[14px]">
+                <Label
+                  htmlFor="login-password"
+                  required
+                  className="text-[14px]"
+                >
                   Password
                 </Label>
                 <Link
@@ -130,10 +148,16 @@ export default function LoginPage() {
                     <button
                       type="button"
                       onClick={() => setShowPassword(!showPassword)}
-                      aria-label={showPassword ? "Hide password" : "Show password"}
+                      aria-label={
+                        showPassword ? "Hide password" : "Show password"
+                      }
                       className="text-muted-foreground hover:text-foreground cursor-pointer"
                     >
-                      {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                      {showPassword ? (
+                        <EyeOff className="w-4 h-4" />
+                      ) : (
+                        <Eye className="w-4 h-4" />
+                      )}
                     </button>
                   }
                   error={errors.password?.message}
@@ -141,7 +165,9 @@ export default function LoginPage() {
                 />
               </div>
               {errors.password && (
-                <p className="text-[12px] text-destructive">{errors.password.message}</p>
+                <p className="text-[12px] text-destructive">
+                  {errors.password.message}
+                </p>
               )}
             </div>
 
@@ -153,7 +179,10 @@ export default function LoginPage() {
                 className="h-4 w-4 rounded border-border text-primary focus:ring-primary accent-primary"
                 {...register("rememberMe")}
               />
-              <Label htmlFor="rememberMe" className="text-[13px] font-normal text-muted-foreground cursor-pointer">
+              <Label
+                htmlFor="rememberMe"
+                className="text-[13px] font-normal text-muted-foreground cursor-pointer"
+              >
                 Remember my login credentials on this workstation
               </Label>
             </div>
@@ -175,18 +204,37 @@ export default function LoginPage() {
               <span className="text-[11px] font-mono uppercase tracking-wider text-muted-foreground">
                 Demo Role Presets
               </span>
-              <span className="text-[11px] text-muted-foreground">Click to fill</span>
+              <span className="text-[11px] text-muted-foreground">
+                Click to fill
+              </span>
             </div>
 
             <div className="grid grid-cols-3 gap-2">
-              {(["ADMIN", "MARKETING", "COMMUNICATION", "VIGILANCE", "SUPPORT", "SALES"] as Role[]).map((r) => {
+              {(
+                [
+                  "ADMIN",
+                  "MARKETING",
+                  "COMMUNICATION",
+                  "VIGILANCE",
+                  "SUPPORT",
+                  "SALES",
+                ] as Role[]
+              ).map((r) => {
                 const cfg = ROLE_CONFIGS[r];
+                const isSelected = selectedRole === r;
+
                 return (
                   <button
                     key={r}
                     type="button"
                     onClick={() => handleRolePreset(r)}
-                    className="p-2 rounded-lg border border-border/80 bg-muted/30 hover:bg-muted/70 text-[12px] font-medium text-foreground text-center transition-colors truncate"
+                    aria-pressed={isSelected}
+                    className={cn(
+                      "p-2.5 rounded-xl border text-[12px] font-semibold text-center transition-all duration-200 truncate",
+                      isSelected
+                        ? "bg-primary/10 text-primary border-primary/40 shadow-neu-inset"
+                        : "border-border/70 bg-card text-foreground shadow-neu-btn hover:shadow-neu-btn-hover active:shadow-neu-inset"
+                    )}
                   >
                     {cfg.badgeLabel}
                   </button>

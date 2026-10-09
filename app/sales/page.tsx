@@ -132,8 +132,8 @@ export default function SalesPage() {
                     onClick={() => setSelectedLead(lead)}
                     className={`p-3.5 rounded-xl border transition-all cursor-pointer select-none ${
                       isSelected
-                        ? "border-purple-500/60 bg-purple-500/5 shadow-xs"
-                        : "border-border bg-card hover:border-border/80 hover:bg-muted/40"
+                        ? "border-purple-500/60 bg-purple-500/10 shadow-neu-inset"
+                        : "border-border/80 bg-card shadow-neu-raised-sm hover:shadow-neu-btn-hover hover:border-border"
                     }`}
                   >
                     <div className="flex items-center justify-between mb-1.5">
@@ -169,7 +169,7 @@ export default function SalesPage() {
           {/* Right Column: Lead Info, Audio Player, Claim Flow */}
           <div className="lg:col-span-8">
             {selectedLead && (
-              <Card className="rounded-xl border border-border shadow-xs">
+              <Card className="rounded-2xl border border-border/80 shadow-neu-raised">
                 <CardHeader className="flex flex-row items-center justify-between py-4 px-5 border-b border-border/70">
                   <div>
                     <div className="flex items-center gap-2.5">
@@ -253,9 +253,9 @@ export default function SalesPage() {
 
                   {/* CLAIM STATE OR CLAIM FORM */}
                   {selectedLead.currentDepartment === "claimed" ? (
-                    <div className="rounded-xl border border-emerald-500/30 bg-emerald-500/5 p-4.5 space-y-3.5">
+                    <div className="rounded-2xl border border-emerald-500/40 bg-emerald-500/5 p-5 space-y-3.5 shadow-neu-raised">
                       <div className="flex items-center gap-2.5">
-                        <div className="p-1.5 rounded-lg bg-emerald-500/10 text-emerald-600 dark:text-emerald-400">
+                        <div className="p-2 rounded-xl bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-500/20 shadow-neu-inset-sm">
                           <Award className="w-4.5 h-4.5" />
                         </div>
                         <div>
@@ -266,7 +266,7 @@ export default function SalesPage() {
                         </div>
                       </div>
 
-                      <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 bg-background/90 rounded-xl border border-border p-3 text-[13px] font-mono">
+                      <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 bg-card/90 rounded-xl border border-border/80 shadow-neu-inset-sm p-3.5 text-[13px] font-mono">
                         <div>
                           <span className="text-muted-foreground block text-[11px]">Claimed By:</span>
                           <span className="font-semibold text-foreground text-[13px]">

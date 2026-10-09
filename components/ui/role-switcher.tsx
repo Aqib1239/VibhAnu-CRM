@@ -44,11 +44,13 @@ export function RoleSwitcher({ className }: { className?: string }) {
       <button
         type="button"
         onClick={() => setIsOpen(!isOpen)}
-        className=" flex items-center gap-2.5 h-9 px-2 rounded-lg border border-border bg-card hover:bg-muted/60 text-[13px] font-medium text-foreground shadow-xs transition-colors"
+        className="flex items-center gap-2.5 h-9 px-3 rounded-xl border border-border/80 bg-card shadow-neu-btn hover:shadow-neu-btn-hover active:shadow-neu-inset text-[13px] font-medium text-foreground transition-all duration-200"
       >
-        <Shield className="w-4 h-4 text-primary" />
+        <div className="flex h-5 w-5 items-center justify-center rounded-lg bg-primary/10 text-primary">
+          <Shield className="w-3.5 h-3.5" />
+        </div>
         <div className="flex flex-col items-start text-left">
-          <span className="text-[10px] text-muted-foreground uppercase tracking-wider font-mono leading-none">
+          <span className="text-[9.5px] text-muted-foreground uppercase tracking-wider font-mono leading-none">
             Role
           </span>
           <span className="font-semibold text-foreground text-[12px] leading-tight">
@@ -66,11 +68,11 @@ export function RoleSwitcher({ className }: { className?: string }) {
       <AnimatePresence>
         {isOpen && (
           <motion.div
-            initial={{ opacity: 0, scale: 0.96, y: -6 }}
+            initial={{ opacity: 0, scale: 0.95, y: -8 }}
             animate={{ opacity: 1, scale: 1, y: 0 }}
-            exit={{ opacity: 0, scale: 0.96, y: -4 }}
-            transition={{ duration: 0.2, ease: "easeOut" }}
-            className="absolute -right-12 sm:right-0 mt-2 w-72 rounded-xl border border-border bg-card p-2 shadow-xl z-50 origin-top-right"
+            exit={{ opacity: 0, scale: 0.95, y: -8 }}
+            transition={{ duration: 0.2, ease: [0.22, 1, 0.36, 1] }}
+            className="absolute -right-12 sm:right-0 mt-2 w-72 rounded-2xl border border-border/80 bg-card p-2 shadow-neu-raised-lg z-50 origin-top-right backdrop-blur-md overflow-hidden"
           >
             <div className="px-2.5 py-2 border-b border-border/60 mb-1.5">
               <p className="text-[13px] font-semibold text-foreground">
@@ -90,22 +92,23 @@ export function RoleSwitcher({ className }: { className?: string }) {
                   <motion.button
                     key={r}
                     type="button"
-                    initial={{ opacity: 0, x: 24 }}
+                    initial={{ opacity: 0, x: 20 }}
                     animate={{ opacity: 1, x: 0 }}
+                    exit={{ opacity: 0, x: 20 }}
                     transition={{
-                      duration: 0.3,
+                      duration: 0.25,
                       ease: [0.22, 1, 0.36, 1],
-                      delay: 0.08 * index, // stagger each item
+                      delay: isOpen ? index * 0.08 : 0,
                     }}
                     onClick={() => {
                       switchRole(r);
                       setIsOpen(false);
                     }}
                     className={cn(
-                      "w-full flex items-center justify-between px-3 py-2.5 rounded-lg text-left text-[13px] transition-colors",
+                      "relative w-full flex items-center justify-between px-3 py-2.5 rounded-xl text-left text-[13px] transition-colors duration-200 border",
                       isSelected
-                        ? "bg-primary/10 text-primary font-semibold border border-primary/20"
-                        : "hover:bg-muted/70 text-foreground"
+                        ? "shadow-neu-inset bg-primary/10 text-primary font-semibold border-primary/20"
+                        : "hover:bg-muted/50 hover:shadow-neu-btn-hover active:shadow-neu-inset text-foreground border-transparent"
                     )}
                   >
                     <div className="min-w-0 pr-2">
@@ -118,9 +121,25 @@ export function RoleSwitcher({ className }: { className?: string }) {
                         {cfg.description}
                       </p>
                     </div>
-                    {isSelected && (
-                      <Check className="w-4 h-4 shrink-0 text-primary" />
-                    )}
+
+                    {/* Animate the check icon so it fades/scales in with the item */}
+                    <AnimatePresence>
+                      {isSelected && (
+                        <motion.span
+                          initial={{ opacity: 0, scale: 0.5 }}
+                          animate={{ opacity: 1, scale: 1 }}
+                          exit={{ opacity: 0, scale: 0.5 }}
+                          transition={{
+                            duration: 0.2,
+                            ease: [0.22, 1, 0.36, 1],
+                            delay: isOpen ? index * 0.04 + 0.05 : 0,
+                          }}
+                          className="shrink-0"
+                        >
+                          <Check className="w-4 h-4 text-primary" />
+                        </motion.span>
+                      )}
+                    </AnimatePresence>
                   </motion.button>
                 );
               })}

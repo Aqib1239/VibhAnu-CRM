@@ -72,10 +72,10 @@ export default function MarketingPage() {
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
         {/* Left Column: Form / Success State */}
         <div className="lg:col-span-7">
-          <Card>
-            <CardHeader className="py-4 px-5">
+          <Card className="shadow-neu-raised rounded-2xl border border-border/80">
+            <CardHeader className="py-4 px-5 border-b border-border/60">
               <div className="flex items-center gap-2.5">
-                <div className="p-2 rounded-lg bg-blue-500/10 text-blue-600 dark:text-blue-400 border border-blue-500/20">
+                <div className="p-2 rounded-xl bg-blue-500/10 text-blue-600 dark:text-blue-400 border border-blue-500/20 shadow-neu-inset-sm">
                   <UserPlus className="w-4 h-4" />
                 </div>
                 <div>
@@ -87,9 +87,9 @@ export default function MarketingPage() {
 
             <CardContent className="p-5">
               {createdLead ? (
-                <div className="rounded-xl border border-emerald-500/30 bg-emerald-500/5 p-5 space-y-4 animate-in fade-in-50">
+                <div className="rounded-2xl border border-emerald-500/40 bg-emerald-500/5 p-5 space-y-4 shadow-neu-raised animate-in fade-in-50">
                   <div className="flex items-start gap-3.5">
-                    <div className="p-2 rounded-lg bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 shrink-0 border border-emerald-500/20">
+                    <div className="p-2 rounded-xl bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 shrink-0 border border-emerald-500/20 shadow-neu-inset-sm">
                       <CheckCircle2 className="w-5 h-5" />
                     </div>
                     <div className="space-y-1">
@@ -103,7 +103,7 @@ export default function MarketingPage() {
                     </div>
                   </div>
 
-                  <div className="bg-background/90 rounded-lg border border-border p-3.5 text-[13px] space-y-1.5 font-mono">
+                  <div className="bg-background/90 rounded-xl border border-border/80 shadow-neu-inset-sm p-3.5 text-[13px] space-y-1.5 font-mono">
                     <div className="flex justify-between">
                       <span className="text-muted-foreground font-sans">Lead Code:</span>
                       <span className="font-semibold text-foreground">{createdLead.leadCode}</span>
@@ -223,13 +223,13 @@ export default function MarketingPage() {
 
         {/* Right Column: Policy & Recent Dispatches */}
         <div className="lg:col-span-5 space-y-6">
-          <Card className="bg-muted/20 border-border/80">
-            <CardHeader className="py-4 px-5">
+          <Card className="bg-muted/30 border-border/80 shadow-neu-inset rounded-2xl">
+            <CardHeader className="py-4 px-5 border-b border-border/60">
               <CardTitle className="text-[12px] font-mono uppercase tracking-wider text-muted-foreground">
                 Marketing Stage Directives
               </CardTitle>
             </CardHeader>
-            <CardContent className="text-[13px] space-y-2.5 text-muted-foreground px-5 pb-5 leading-relaxed">
+            <CardContent className="text-[13px] space-y-2.5 text-muted-foreground px-5 py-4 leading-relaxed">
               <p>
                 <strong className="text-foreground">Intake:</strong> Captures fresh prospects with verified contact numbers.
               </p>
@@ -239,8 +239,8 @@ export default function MarketingPage() {
             </CardContent>
           </Card>
 
-          <Card>
-            <CardHeader className="py-4 px-5">
+          <Card className="shadow-neu-raised rounded-2xl border border-border/80">
+            <CardHeader className="py-4 px-5 border-b border-border/60">
               <CardTitle className="text-[16px]">Recent Marketing Entries</CardTitle>
               <CardDescription className="text-[13px]">Recently registered inbound leads</CardDescription>
             </CardHeader>

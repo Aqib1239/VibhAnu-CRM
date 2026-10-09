@@ -467,8 +467,8 @@ export function AudioPlayer({
   return (
     <div
       className={cn(
-        "w-full rounded-xl border bg-card p-3.5 shadow-xs transition-colors duration-500",
-        isEndedNaturally ? "border-emerald-500/40 bg-emerald-500/5" : "border-border",
+        "w-full rounded-2xl border bg-card p-4 shadow-neu-raised transition-all duration-300",
+        isEndedNaturally ? "border-emerald-500/40 bg-emerald-500/5 shadow-[0_4px_16px_rgba(16,185,129,0.12)]" : "border-border/80",
         className
       )}
     >
@@ -483,12 +483,12 @@ export function AudioPlayer({
         <div className="flex min-w-0 items-center gap-3">
           <div
             className={cn(
-              "flex h-10 w-10 shrink-0 items-center justify-center rounded-lg transition-colors duration-300",
+              "flex h-10 w-10 shrink-0 items-center justify-center rounded-xl shadow-neu-inset-sm transition-colors duration-300",
               isEndedNaturally
-                ? "bg-emerald-500/15 text-emerald-600 dark:text-emerald-400"
+                ? "bg-emerald-500/15 text-emerald-600 dark:text-emerald-400 border border-emerald-500/20"
                 : isPlaying
-                ? "bg-primary/15 text-primary"
-                : "bg-muted text-muted-foreground"
+                ? "bg-primary/15 text-primary border border-primary/20"
+                : "bg-muted/70 text-muted-foreground border border-border/60"
             )}
           >
             <FileAudio className="h-5 w-5" />
@@ -512,17 +512,17 @@ export function AudioPlayer({
         {/* Status pill */}
         <div className="shrink-0">
           {hasError ? (
-            <span className="inline-flex items-center gap-1.5 rounded-md border border-destructive/30 bg-destructive/10 px-2.5 py-0.5 text-[11px] font-medium text-destructive">
+            <span className="inline-flex items-center gap-1.5 rounded-lg border border-destructive/30 bg-destructive/10 px-2.5 py-0.5 text-[11px] font-medium text-destructive shadow-2xs">
               <AlertCircle className="h-3 w-3" />
               Unavailable
             </span>
           ) : isEndedNaturally ? (
-            <span className="inline-flex items-center gap-1.5 rounded-md border border-emerald-500/25 bg-emerald-500/10 px-2.5 py-0.5 text-[11px] font-medium text-emerald-600 dark:text-emerald-400">
+            <span className="inline-flex items-center gap-1.5 rounded-lg border border-emerald-500/25 bg-emerald-500/10 px-2.5 py-0.5 text-[11px] font-medium text-emerald-600 dark:text-emerald-400 shadow-2xs">
               <CheckCircle2 className="h-3 w-3" />
               Verified
             </span>
           ) : isPlaying ? (
-            <span className="inline-flex items-center gap-1.5 rounded-md border border-primary/25 bg-primary/10 px-2.5 py-0.5 text-[11px] font-medium text-primary">
+            <span className="inline-flex items-center gap-1.5 rounded-lg border border-primary/25 bg-primary/10 px-2.5 py-0.5 text-[11px] font-medium text-primary shadow-2xs">
               <span className="flex h-3 items-end gap-[2px]" aria-hidden>
                 {[0, 150, 300].map((delay) => (
                   <span
@@ -535,7 +535,7 @@ export function AudioPlayer({
               Playing
             </span>
           ) : (
-            <span className="inline-flex items-center rounded-md border border-border bg-muted px-2.5 py-0.5 text-[11px] font-medium text-muted-foreground">
+            <span className="inline-flex items-center rounded-lg border border-border/80 bg-muted/60 px-2.5 py-0.5 text-[11px] font-medium text-muted-foreground shadow-2xs">
               {currentTime > 0 ? "Paused" : "Ready"}
             </span>
           )}
@@ -546,7 +546,7 @@ export function AudioPlayer({
       {hasError && errorMessage && (
         <div
           role="alert"
-          className="mt-3 flex items-start justify-between gap-2 rounded-lg border border-destructive/20 bg-destructive/5 px-3 py-2 text-[12.5px] text-destructive"
+          className="mt-3 flex items-start justify-between gap-2 rounded-xl border border-destructive/20 bg-destructive/5 px-3 py-2 text-[12.5px] text-destructive shadow-2xs"
         >
           <div className="flex items-start gap-2 min-w-0">
             <AlertCircle className="mt-0.5 h-3.5 w-3.5 shrink-0" />
@@ -575,7 +575,7 @@ export function AudioPlayer({
           step={1}
           ariaLabel="Seek audio position"
           ariaValueText={`${formatSeconds(displayTime)} of ${formatSeconds(duration)}`}
-          className="h-14 rounded-lg bg-muted/50 px-2 py-2"
+          className="h-14 rounded-xl shadow-neu-inset bg-muted/40 px-3 py-2 border border-border/60"
           onChange={(v) => setScrubTime(limitSeek(v))}
           onCommit={(v) => {
             seekTo(v);
@@ -626,7 +626,7 @@ export function AudioPlayer({
             disabled={hasError}
             title="Restart"
             aria-label="Restart audio from the beginning"
-            className="flex h-9 w-9 items-center justify-center rounded-full text-muted-foreground transition-all duration-200 hover:bg-muted hover:text-foreground active:scale-90 disabled:pointer-events-none disabled:opacity-40"
+            className="flex h-9 w-9 items-center justify-center rounded-full text-muted-foreground border border-border/70 bg-card shadow-neu-btn hover:shadow-neu-btn-hover active:shadow-neu-inset transition-all duration-200 hover:text-foreground disabled:pointer-events-none disabled:opacity-40"
           >
             <RotateCcw className="h-4 w-4" />
           </button>
@@ -637,7 +637,7 @@ export function AudioPlayer({
             disabled={hasError}
             title={`Back ${SKIP_SECONDS} seconds`}
             aria-label={`Skip back ${SKIP_SECONDS} seconds`}
-            className="relative flex h-9 w-9 items-center justify-center rounded-full text-muted-foreground transition-all duration-200 hover:bg-muted hover:text-foreground active:scale-90 disabled:pointer-events-none disabled:opacity-40"
+            className="relative flex h-9 w-9 items-center justify-center rounded-full text-muted-foreground border border-border/70 bg-card shadow-neu-btn hover:shadow-neu-btn-hover active:shadow-neu-inset transition-all duration-200 hover:text-foreground disabled:pointer-events-none disabled:opacity-40"
           >
             <RotateCcw className="h-[18px] w-[18px] -scale-x-100 rotate-180 opacity-0" aria-hidden />
             <span className="absolute text-[11px] font-semibold font-mono tabular-nums">-{SKIP_SECONDS}</span>
@@ -649,13 +649,13 @@ export function AudioPlayer({
             disabled={hasError}
             aria-label={isPlaying ? "Pause audio playback" : "Play audio playback"}
             className={cn(
-              "relative mx-1 flex h-11 w-11 items-center justify-center rounded-full shadow-md transition-all duration-300",
+              "relative mx-1.5 flex h-11 w-11 items-center justify-center rounded-full transition-all duration-300",
               "hover:scale-105 active:scale-95 disabled:pointer-events-none disabled:opacity-50",
               "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/50 focus-visible:ring-offset-2 focus-visible:ring-offset-background",
               isEndedNaturally && !isPlaying
-                ? "bg-emerald-500 text-white hover:bg-emerald-600"
-                : "bg-primary text-primary-foreground hover:bg-primary/90",
-              isPlaying && "shadow-md shadow-primary/30"
+                ? "bg-emerald-500 text-white shadow-neu-btn hover:shadow-neu-btn-hover active:shadow-neu-inset"
+                : "bg-primary text-primary-foreground shadow-neu-btn hover:shadow-neu-btn-hover active:shadow-neu-inset shadow-primary/30",
+              isPlaying && "shadow-neu-inset"
             )}
           >
             <Play
@@ -688,7 +688,7 @@ export function AudioPlayer({
             disabled={hasError}
             title={`Forward ${SKIP_SECONDS} seconds`}
             aria-label={`Skip forward ${SKIP_SECONDS} seconds`}
-            className="relative flex h-9 w-9 items-center justify-center rounded-full text-muted-foreground transition-all duration-200 hover:bg-muted hover:text-foreground active:scale-90 disabled:pointer-events-none disabled:opacity-40"
+            className="relative flex h-9 w-9 items-center justify-center rounded-full text-muted-foreground border border-border/70 bg-card shadow-neu-btn hover:shadow-neu-btn-hover active:shadow-neu-inset transition-all duration-200 hover:text-foreground disabled:pointer-events-none disabled:opacity-40"
           >
             <RotateCw className="h-[18px] w-[18px] opacity-0" aria-hidden />
             <span className="absolute text-[11px] font-semibold font-mono tabular-nums">+{SKIP_SECONDS}</span>
@@ -701,7 +701,7 @@ export function AudioPlayer({
             type="button"
             onClick={toggleMute}
             aria-label={effectiveVolume === 0 ? "Unmute audio" : "Mute audio"}
-            className="flex h-9 w-9 items-center justify-center rounded-full text-muted-foreground transition-all duration-200 hover:bg-muted hover:text-foreground active:scale-90"
+            className="flex h-9 w-9 items-center justify-center rounded-full text-muted-foreground border border-border/70 bg-card shadow-neu-btn hover:shadow-neu-btn-hover active:shadow-neu-inset transition-all duration-200 hover:text-foreground"
           >
             <VolumeIcon className="h-[18px] w-[18px]" />
           </button>
@@ -716,7 +716,7 @@ export function AudioPlayer({
             onChange={handleVolume}
           >
             {({ percent, dragging }) => (
-              <div className="relative h-1.5 w-full rounded-full bg-muted">
+              <div className="relative h-2 w-full rounded-full shadow-neu-inset-sm bg-muted/70 border border-border/60">
                 <div
                   className={cn(
                     "absolute inset-y-0 left-0 rounded-full bg-primary",
@@ -726,8 +726,8 @@ export function AudioPlayer({
                 />
                 <div
                   className={cn(
-                    "pointer-events-none absolute top-1/2 h-3.5 w-3.5 -translate-x-1/2 -translate-y-1/2 rounded-full border-2 border-primary bg-background shadow transition-transform duration-150",
-                    dragging ? "scale-125" : "scale-100 group-hover:scale-110"
+                    "pointer-events-none absolute top-1/2 h-4 w-4 -translate-x-1/2 -translate-y-1/2 rounded-full border border-border/80 bg-card shadow-neu-btn transition-transform duration-150",
+                    dragging ? "scale-110 shadow-neu-inset" : "scale-100 group-hover:scale-105"
                   )}
                   style={{ left: `${percent}%` }}
                 />

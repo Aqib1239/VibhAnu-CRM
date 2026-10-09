@@ -31,12 +31,12 @@ export function WorkflowStepper({ currentDepartment, className }: WorkflowSteppe
   return (
     <div className={cn("w-full py-2 overflow-x-auto", className)}>
       <div className="flex items-center min-w-[620px] justify-between relative px-4">
-        {/* Background track line */}
-        <div className="absolute top-4 left-8 right-8 h-0.5 bg-border/80 -z-0" />
+        {/* Background track line: sunken groove */}
+        <div className="absolute top-[18px] left-8 right-8 h-1.5 -translate-y-1/2 rounded-full bg-muted/80 shadow-neu-inset-sm border border-border/50 -z-0" />
         
         {/* Active filled line */}
         <div
-          className="absolute top-4 left-8 h-0.5 bg-primary transition-all duration-300 -z-0"
+          className="absolute top-[18px] left-8 h-1.5 -translate-y-1/2 rounded-full bg-primary shadow-xs transition-all duration-300 -z-0"
           style={{
             width: `${Math.max(0, (currentIndex / (STAGES.length - 1)) * 100)}%`,
           }}
@@ -52,10 +52,10 @@ export function WorkflowStepper({ currentDepartment, className }: WorkflowSteppe
             <div key={stage.id} className="flex flex-col items-center relative z-10">
               <div
                 className={cn(
-                  "w-8 h-8 rounded-full flex items-center justify-center text-xs font-semibold border transition-all duration-150 bg-background",
-                  isCompleted && "bg-primary border-primary text-primary-foreground shadow-2xs",
-                  isCurrent && "border-primary text-primary ring-4 ring-primary/15 font-bold bg-background shadow-xs",
-                  isPending && "border-border text-muted-foreground/60 bg-muted/50"
+                  "w-9 h-9 rounded-full flex items-center justify-center text-xs font-semibold border transition-all duration-200",
+                  isCompleted && "bg-primary border-primary text-primary-foreground shadow-neu-btn",
+                  isCurrent && "border-primary/80 text-primary ring-4 ring-primary/15 font-bold bg-card shadow-neu-raised",
+                  isPending && "border-border/80 text-muted-foreground/60 bg-card shadow-neu-raised-sm"
                 )}
               >
                 {isCompleted ? (
@@ -67,7 +67,7 @@ export function WorkflowStepper({ currentDepartment, className }: WorkflowSteppe
               <span
                 className={cn(
                   "mt-2 text-[13px] tracking-tight whitespace-nowrap",
-                  isCompleted && "text-foreground font-medium",
+                  isCompleted && "text-foreground font-semibold",
                   isCurrent && "text-primary font-bold",
                   isPending && "text-muted-foreground/70 font-normal"
                 )}

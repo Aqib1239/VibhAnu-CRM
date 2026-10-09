@@ -8,25 +8,25 @@ export interface BadgeProps extends React.HTMLAttributes<HTMLDivElement> {
 
 export function Badge({ className, variant = "default", size = "sm", ...props }: BadgeProps) {
   const variants = {
-    default: "bg-primary text-primary-foreground border-transparent",
-    secondary: "bg-secondary text-secondary-foreground border-transparent",
-    neutral: "bg-muted text-muted-foreground border-border/40",
-    outline: "text-foreground border-border",
-    success: "bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border-emerald-200 dark:border-emerald-800/40",
-    warning: "bg-amber-500/10 text-amber-600 dark:text-amber-400 border-amber-200 dark:border-amber-800/40",
-    destructive: "bg-rose-500/10 text-rose-600 dark:text-rose-400 border-rose-200 dark:border-rose-800/40",
-    info: "bg-sky-500/10 text-sky-600 dark:text-sky-400 border-sky-200 dark:border-sky-800/40",
+    default: "bg-primary text-primary-foreground border-primary/20 shadow-xs",
+    secondary: "bg-secondary text-secondary-foreground border-border/70 shadow-2xs",
+    neutral: "bg-muted/70 text-muted-foreground border-border/80 shadow-2xs",
+    outline: "text-foreground border-border/80 bg-card/60 shadow-2xs",
+    success: "bg-emerald-500/10 text-emerald-700 dark:text-emerald-300 border-emerald-300/50 dark:border-emerald-800/50 shadow-2xs",
+    warning: "bg-amber-500/10 text-amber-700 dark:text-amber-300 border-amber-300/50 dark:border-amber-800/50 shadow-2xs",
+    destructive: "bg-rose-500/10 text-rose-700 dark:text-rose-300 border-rose-300/50 dark:border-rose-800/50 shadow-2xs",
+    info: "bg-sky-500/10 text-sky-700 dark:text-sky-300 border-sky-300/50 dark:border-sky-800/50 shadow-2xs",
   };
 
   const sizes = {
-    sm: "px-2 py-0.5 text-[11px] font-medium tracking-tight",
-    md: "px-2.5 py-1 text-xs font-medium",
+    sm: "px-2.5 py-0.5 text-[11px] font-medium tracking-tight",
+    md: "px-3 py-1 text-xs font-medium",
   };
 
   return (
     <div
       className={cn(
-        "inline-flex items-center gap-1 rounded-full border transition-colors select-none font-sans",
+        "inline-flex items-center gap-1 rounded-full border transition-all select-none font-sans",
         variants[variant],
         sizes[size],
         className

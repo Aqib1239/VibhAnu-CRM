@@ -45,7 +45,7 @@ export default function RootLayout({
                 <AppShell>{children}</AppShell>
                 <Toaster
                   position="top-right"
-                  duration={5000}
+                  duration={3000}
                   closeButton
                   richColors
                   visibleToasts={4}

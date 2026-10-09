@@ -34,17 +34,17 @@ export function WorkflowTimeline({ history, className }: WorkflowTimelineProps) 
             {/* Timeline Dot */}
             <div
               className={cn(
-                "absolute -left-6 top-1.5 w-5 h-5 rounded-full bg-background border flex items-center justify-center transition-colors shadow-2xs",
+                "absolute -left-6 top-1.5 w-5 h-5 rounded-full bg-card border flex items-center justify-center transition-all shadow-neu-raised-sm",
                 isLatest
-                  ? "border-primary ring-4 ring-primary/15"
-                  : "border-border text-muted-foreground"
+                  ? "border-primary ring-4 ring-primary/20"
+                  : "border-border/80 text-muted-foreground"
               )}
             >
               <div className={cn("w-2 h-2 rounded-full", isLatest ? "bg-primary" : "bg-muted-foreground/40")} />
             </div>
 
             {/* Content Card */}
-            <div className="bg-card border border-border rounded-xl p-4 shadow-xs space-y-2 transition-colors hover:border-border/90">
+            <div className="bg-card border border-border/80 rounded-2xl m-1 p-3 shadow-neu-raised space-y-2.5 transition-all hover:shadow-neu-btn-hover">
               <div className="flex flex-wrap items-center justify-between gap-2">
                 <div className="flex items-center gap-2">
                   <h4 className="text-[14px] font-semibold text-foreground">
@@ -61,8 +61,8 @@ export function WorkflowTimeline({ history, className }: WorkflowTimelineProps) 
                 {item.description}
               </p>
 
-              <div className="flex items-center gap-2 pt-2 border-t border-border/50 text-[12px] text-muted-foreground">
-                <span className="font-medium text-foreground">{item.userName}</span>
+              <div className="flex items-center gap-2 pt-2 border-t border-border/60 text-[12px] text-muted-foreground">
+                <span className="font-semibold text-foreground">{item.userName}</span>
                 <span>•</span>
                 <RoleBadge role={item.userRole} size="sm" />
               </div>

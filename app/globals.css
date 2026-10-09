@@ -4,99 +4,135 @@
 
 @layer base {
   :root {
-    /* Refined Enterprise SaaS Light Theme Tokens (Linear x Stripe aesthetic) */
-    --background: 240 10% 98%;      /* oklch(0.975 0.004 260) #f8f9fa */
-    --foreground: 240 10% 12%;      /* oklch(0.205 0.022 263) #181d27 */
+    /* Premium Neumorphic (Soft UI) Enterprise Theme Tokens */
+    --background: 248 24% 95.5%;      /* #F1F0F7 Warm Lavender-Gray Base Surface */
+    --foreground: 240 18% 15%;        /* #1F222E High-Contrast Deep Charcoal Slate */
 
-    --card: 0 0% 100%;              /* Pure white surface */
-    --card-foreground: 240 10% 12%;
+    --card: 248 24% 96%;              /* #F4F3FA Micro-Raised Soft Neumorphic Surface */
+    --card-foreground: 240 18% 15%;
 
-    --popover: 0 0% 100%;
-    --popover-foreground: 240 10% 12%;
+    --popover: 248 24% 96.5%;
+    --popover-foreground: 240 18% 15%;
 
-    --primary: 226 70% 50%;         /* oklch(0.56 0.19 258) Refined Cobalt Indigo */
+    --primary: 250 84% 58%;           /* #614BEE Refined Royal Indigo-Violet */
     --primary-foreground: 0 0% 100%;
 
-    --secondary: 240 5% 94%;
-    --secondary-foreground: 240 10% 12%;
+    --secondary: 248 20% 93%;
+    --secondary-foreground: 240 18% 15%;
 
-    --muted: 240 5% 95%;            /* oklch(0.955 0.006 260) #f1f3f7 */
-    --muted-foreground: 240 4% 44%; /* oklch(0.51 0.028 262) #687282 */
+    --muted: 248 20% 92%;            /* #E8E6F0 Sunken Recessed Fill */
+    --muted-foreground: 245 10% 46%; /* #6D7080 High-Legibility Secondary Text */
 
-    --accent: 240 5% 93%;
-    --accent-foreground: 240 10% 12%;
+    --accent: 248 20% 93%;
+    --accent-foreground: 240 18% 15%;
 
-    --destructive: 0 72% 51%;
+    --destructive: 0 74% 53%;
     --destructive-foreground: 0 0% 98%;
 
-    --success: 160 84% 39%;
+    --success: 158 75% 38%;
     --success-foreground: 0 0% 100%;
 
-    --warning: 38 92% 50%;
-    --warning-foreground: 240 10% 4%;
+    --warning: 38 92% 48%;
+    --warning-foreground: 240 18% 12%;
 
-    --info: 217 91% 60%;
+    --info: 217 91% 58%;
     --info-foreground: 0 0% 100%;
 
-    --border: 240 6% 89%;           /* oklch(0.895 0.012 260) #e2e5eb */
-    --input: 240 6% 86%;
-    --ring: 226 70% 50%;
+    --border: 248 18% 88%;           /* #DDDCE7 Delicate Hairline Neumorphic Border */
+    --input: 248 18% 86%;
+    --ring: 250 84% 58%;
 
-    --radius: 0.75rem;              /* 12px standard card radius */
+    --radius: 0.875rem;             /* 14px refined neumorphic corner radius */
+
+    /* Neumorphic Dual Shadows (Light Theme) */
+    --neu-light-highlight: rgba(255, 255, 255, 0.95);
+    --neu-dark-shadow: rgba(166, 161, 189, 0.28);
+    --neu-dark-shadow-sm: rgba(166, 161, 189, 0.20);
+    --neu-dark-shadow-lg: rgba(166, 161, 189, 0.35);
+
+    --neu-shadow-raised: 6px 6px 14px var(--neu-dark-shadow), -6px -6px 14px var(--neu-light-highlight);
+    --neu-shadow-raised-sm: 3px 3px 8px var(--neu-dark-shadow-sm), -3px -3px 8px var(--neu-light-highlight);
+    --neu-shadow-raised-lg: 10px 10px 24px var(--neu-dark-shadow-lg), -10px -10px 24px var(--neu-light-highlight);
+
+    --neu-shadow-inset: inset 2px 2px 5px rgba(166, 161, 189, 0.28), inset -2px -2px 5px var(--neu-light-highlight);
+    --neu-shadow-inset-sm: inset 1.5px 1.5px 3.5px rgba(166, 161, 189, 0.22), inset -1.5px -1.5px 3.5px var(--neu-light-highlight);
+
+    --neu-shadow-btn: 4px 4px 10px rgba(166, 161, 189, 0.26), -4px -4px 10px var(--neu-light-highlight);
+    --neu-shadow-btn-hover: 5px 5px 14px rgba(166, 161, 189, 0.32), -5px -5px 14px rgba(255, 255, 255, 1);
+    --neu-shadow-btn-active: inset 2px 2px 5px rgba(166, 161, 189, 0.35), inset -2px -2px 5px var(--neu-light-highlight);
+    --neu-shadow-glow: 0 0 16px rgba(97, 75, 238, 0.25);
   }
 
   .dark {
-    /* Refined Deep Navy/Slate Dark Theme (Never pure black) */
-    --background: 240 10% 8%;       /* oklch(0.16 0.018 263) #11141a */
-    --foreground: 240 5% 94%;       /* oklch(0.94 0.008 260) #eff1f5 */
+    /* Neumorphic Dark Theme (Deep Slate-Navy Soft UI) */
+    --background: 240 14% 10%;       /* #16171E Deep Navy-Slate Canvas */
+    --foreground: 240 10% 94%;       /* #ECEEF4 Crisp Off-White */
 
-    --card: 240 8% 11%;             /* oklch(0.205 0.02 263) #181c24 */
-    --card-foreground: 240 5% 94%;
+    --card: 240 13% 12.5%;           /* #1C1E26 Soft Dark Neumorphic Panel */
+    --card-foreground: 240 10% 94%;
 
-    --popover: 240 8% 13%;
-    --popover-foreground: 240 5% 94%;
+    --popover: 240 13% 13.5%;
+    --popover-foreground: 240 10% 94%;
 
-    --primary: 217 91% 60%;         /* oklch(0.70 0.15 255) #3b82f6 */
+    --primary: 245 85% 65%;          /* #7B68EE Luminous Indigo */
     --primary-foreground: 0 0% 100%;
 
-    --secondary: 240 7% 15%;
-    --secondary-foreground: 240 5% 94%;
+    --secondary: 240 11% 16%;
+    --secondary-foreground: 240 10% 94%;
 
-    --muted: 240 7% 14%;            /* oklch(0.24 0.02 263) #202530 */
-    --muted-foreground: 240 5% 64%; /* oklch(0.65 0.02 260) #94a0b3 */
+    --muted: 240 11% 15%;            /* #1F212B Recessed Dark Well */
+    --muted-foreground: 240 8% 65%;  /* #9BA0B2 Legible Secondary */
 
-    --accent: 240 7% 16%;
-    --accent-foreground: 240 5% 94%;
+    --accent: 240 11% 17%;
+    --accent-foreground: 240 10% 94%;
 
-    --destructive: 0 72% 51%;
+    --destructive: 0 74% 56%;
     --destructive-foreground: 0 0% 98%;
 
-    --success: 160 74% 44%;
+    --success: 158 70% 45%;
     --success-foreground: 0 0% 100%;
 
-    --warning: 38 92% 50%;
+    --warning: 38 92% 52%;
     --warning-foreground: 0 0% 4%;
 
-    --info: 217 91% 60%;
+    --info: 217 91% 62%;
     --info-foreground: 0 0% 100%;
 
-    --border: 240 6% 18%;           /* oklch(1 0 0 / 12%) subtle slate border */
-    --input: 240 6% 20%;
-    --ring: 217 91% 60%;
+    --border: 240 10% 18%;           /* #282A36 Dark Hairline Edge */
+    --input: 240 10% 19%;
+    --ring: 245 85% 65%;
+
+    /* Neumorphic Dual Shadows (Dark Theme) */
+    --neu-light-highlight: rgba(255, 255, 255, 0.035);
+    --neu-dark-shadow: rgba(0, 0, 0, 0.50);
+    --neu-dark-shadow-sm: rgba(0, 0, 0, 0.35);
+    --neu-dark-shadow-lg: rgba(0, 0, 0, 0.65);
+
+    --neu-shadow-raised: 5px 5px 12px var(--neu-dark-shadow), -4px -4px 10px var(--neu-light-highlight);
+    --neu-shadow-raised-sm: 3px 3px 7px var(--neu-dark-shadow-sm), -2px -2px 6px var(--neu-light-highlight);
+    --neu-shadow-raised-lg: 8px 8px 20px var(--neu-dark-shadow-lg), -6px -6px 16px var(--neu-light-highlight);
+
+    --neu-shadow-inset: inset 2px 2px 6px rgba(0, 0, 0, 0.6), inset -2px -2px 6px var(--neu-light-highlight);
+    --neu-shadow-inset-sm: inset 1.5px 1.5px 4px rgba(0, 0, 0, 0.5), inset -1.5px -1.5px 4px var(--neu-light-highlight);
+
+    --neu-shadow-btn: 3px 3px 8px var(--neu-dark-shadow), -2px -2px 6px var(--neu-light-highlight);
+    --neu-shadow-btn-hover: 4px 4px 12px rgba(0, 0, 0, 0.6), -3px -3px 8px rgba(255, 255, 255, 0.06);
+    --neu-shadow-btn-active: inset 2px 2px 5px rgba(0, 0, 0, 0.7), inset -1px -1px 3px var(--neu-light-highlight);
+    --neu-shadow-glow: 0 0 16px rgba(123, 104, 238, 0.3);
   }
 
   /* Accent Themes (Light Mode) */
   [data-accent="blue"] {
-    --primary: 226 70% 50%;
-    --ring: 226 70% 50%;
+    --primary: 226 75% 54%;
+    --ring: 226 75% 54%;
   }
   [data-accent="purple"] {
-    --primary: 270 70% 52%;
-    --ring: 270 70% 52%;
+    --primary: 270 75% 56%;
+    --ring: 270 75% 56%;
   }
   [data-accent="emerald"] {
-    --primary: 160 84% 39%;
-    --ring: 160 84% 39%;
+    --primary: 158 75% 38%;
+    --ring: 158 75% 38%;
   }
   [data-accent="orange"] {
     --primary: 24 95% 50%;
@@ -109,16 +145,16 @@
 
   /* Accent Themes (Dark Mode) */
   .dark[data-accent="blue"] {
-    --primary: 217 91% 60%;
-    --ring: 217 91% 60%;
+    --primary: 217 91% 62%;
+    --ring: 217 91% 62%;
   }
   .dark[data-accent="purple"] {
-    --primary: 270 85% 65%;
-    --ring: 270 85% 65%;
+    --primary: 270 85% 68%;
+    --ring: 270 85% 68%;
   }
   .dark[data-accent="emerald"] {
-    --primary: 160 74% 48%;
-    --ring: 160 74% 48%;
+    --primary: 158 70% 48%;
+    --ring: 158 70% 48%;
   }
   .dark[data-accent="orange"] {
     --primary: 24 95% 58%;
@@ -143,6 +179,59 @@
   /* Precise tabular numbers for metrics, timestamps, and financial figures */
   .tabular-nums {
     font-variant-numeric: tabular-nums;
+  }
+}
+
+@layer components {
+  /* Soft Neumorphic Raised Panel */
+  .neu-panel {
+    background-color: hsl(var(--card));
+    box-shadow: var(--neu-shadow-raised);
+    border: 1px solid hsl(var(--border) / 0.8);
+  }
+
+  .neu-panel-sm {
+    background-color: hsl(var(--card));
+    box-shadow: var(--neu-shadow-raised-sm);
+    border: 1px solid hsl(var(--border) / 0.7);
+  }
+
+  .neu-panel-lg {
+    background-color: hsl(var(--card));
+    box-shadow: var(--neu-shadow-raised-lg);
+    border: 1px solid hsl(var(--border) / 0.9);
+  }
+
+  /* Sunken / Inset Recessed Surface */
+  .neu-inset {
+    background-color: hsl(var(--muted) / 0.6);
+    box-shadow: var(--neu-shadow-inset);
+    border: 1px solid hsl(var(--border) / 0.8);
+  }
+
+  .neu-inset-sm {
+    background-color: hsl(var(--muted) / 0.6);
+    box-shadow: var(--neu-shadow-inset-sm);
+    border: 1px solid hsl(var(--border) / 0.7);
+  }
+
+  /* Neumorphic Interactive Button */
+  .neu-btn {
+    box-shadow: var(--neu-shadow-btn);
+    transition: all 160ms cubic-bezier(0.22, 1, 0.36, 1);
+  }
+  .neu-btn:hover {
+    box-shadow: var(--neu-shadow-btn-hover);
+    transform: translateY(-0.5px);
+  }
+  .neu-btn:active {
+    box-shadow: var(--neu-shadow-btn-active);
+    transform: translateY(0);
+  }
+
+  /* Sunken Active State */
+  .neu-active {
+    box-shadow: var(--neu-shadow-btn-active) !important;
   }
 }
 
@@ -211,16 +300,17 @@
   animation: toast-slide-out 200ms cubic-bezier(0.22, 1, 0.36, 1) forwards !important;
 }
 
-/* 5-Second Linear Timer Line */
+/* 3-Second Linear Timer Line */
 [data-sonner-toast]::after {
   content: "";
   position: absolute;
   bottom: 0;
   left: 0;
   right: 0;
-  height: 2px;
+  height: 6px;
+  border-radius: 20px;
   transform-origin: left;
-  animation: toast-progress-countdown 5000ms linear forwards;
+  animation: toast-progress-countdown 3000ms linear forwards;
   opacity: 0.9;
   z-index: 10;
 }
